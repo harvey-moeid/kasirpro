@@ -102,6 +102,8 @@ mode = "smart"
 # etalase (salah), bukan ke kasire.
 #
 # PRASYARAT: domain harus jadi zone aktif di akun Cloudflare Anda (DNS
+
+
 # dikelola Cloudflare) — bukan sekadar "custom domain" ala Workers biasa,
 # karena path-based routing hanya bisa lewat Route, bukan Custom Domain
 # (Custom Domain cuma bisa 1 domain = 1 worker, tidak bisa split per-path).
@@ -110,3 +112,19 @@ routes = [
   { pattern = "domainanda.com/kasir", zone_name = "domainanda.com" },
   { pattern = "domainanda.com/kasir/*", zone_name = "domainanda.com" }
 ]
+
+
+[observability]
+enabled = false
+head_sampling_rate = 1
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+persist = true
+invocation_logs = true
+
+[observability.traces]
+enabled = false
+persist = true
+head_sampling_rate = 1
