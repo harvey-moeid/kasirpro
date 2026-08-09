@@ -2655,7 +2655,20 @@ app.post('/api/admin/reset-data', requireAuth, requireRole('super_admin', 'admin
   try {
     // Urutan HARUS begini (anak sebelum induk) karena foreign key —
     // dibungkus db.batch() supaya atomik (semua sukses atau semua batal).
+    //
+    // FIX (bug kritis): retur_item & retur WAJIB dihapus sebelum
+    // detail_transaksi & transaksi — keduanya tidak punya ON DELETE CASCADE,
+    // jadi DELETE transaksi/detail_transaksi sebelumnya selalu GAGAL dengan
+    // FK violation kalau toko ini punya data retur.
+    // Urutan lengkap:
+    //   retur_item → retur → detail_transaksi + transaksi_pembayaran
+    //   → riwayat_stok → transaksi → shift_kasir → log_aktivitas → produk
+    // (produk dihapus paling akhir karena riwayat_stok & produk_galeri
+    //  reference ke sana; produk_galeri punya ON DELETE CASCADE, produk di
+    //  order_items punya ON DELETE SET NULL — keduanya aman tanpa hapus manual)
     await db.batch([
+      db.prepare('DELETE FROM retur_item WHERE retur_id IN (SELECT id FROM retur WHERE toko_id = ?)').bind(targetTokoId),
+      db.prepare('DELETE FROM retur WHERE toko_id = ?').bind(targetTokoId),
       db.prepare('DELETE FROM detail_transaksi WHERE transaksi_id IN (SELECT id FROM transaksi WHERE toko_id = ?)').bind(targetTokoId),
       db.prepare('DELETE FROM transaksi_pembayaran WHERE transaksi_id IN (SELECT id FROM transaksi WHERE toko_id = ?)').bind(targetTokoId),
       db.prepare('DELETE FROM riwayat_stok WHERE produk_id IN (SELECT id FROM produk WHERE toko_id = ?)').bind(targetTokoId),
