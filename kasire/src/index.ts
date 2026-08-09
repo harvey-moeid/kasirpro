@@ -247,6 +247,9 @@ async function catatLog(
 // 3. ROUTES: AUTENTIKASI
 // ==========================================================
 
+const LOGIN_MAX_ATTEMPTS = 5;       // percobaan gagal berurutan sebelum terkunci
+const LOGIN_LOCK_MINUTES = 15;      // durasi kunci (menit)
+
 app.post('/api/auth/login', async (c) => {
   try {
     const { username, password } = await c.req.json<{ username?: string; password?: string }>();
@@ -255,10 +258,28 @@ app.post('/api/auth/login', async (c) => {
     }
 
     const db = c.env.DB;
+    // Ambil semua kolom termasuk failed_attempts & locked_until.
+    // is_active tidak difilter di sini — akun nonaktif tetap dicek supaya
+    // pesan errornya konsisten ("username atau password salah") dan tidak
+    // membocorkan status akun kepada penyerang.
     const user = await db
-      .prepare('SELECT * FROM users WHERE username = ? AND is_active = 1')
+      .prepare('SELECT * FROM users WHERE username = ?')
       .bind(username)
       .first<any>();
+
+    // Cek rate limit SEBELUM verifyPassword (biar tidak buang waktu hash
+    // untuk akun yang sudah terkunci). Cek berlaku meski user tidak ditemukan
+    // supaya tidak ada timing perbedaan yang bocorkan keberadaan username.
+    if (user?.locked_until) {
+      const lockExpiry = new Date(user.locked_until).getTime();
+      if (Date.now() < lockExpiry) {
+        const sisaMenit = Math.ceil((lockExpiry - Date.now()) / 60000);
+        return c.json(
+          { success: false, error: `Akun terkunci sementara karena terlalu banyak percobaan login gagal. Coba lagi dalam ${sisaMenit} menit.` },
+          429
+        );
+      }
+    }
 
     // Selalu jalankan verifyPassword walau user tidak ditemukan (dummy hash+salt)
     // agar waktu respons konsisten dan tidak membocorkan apakah username valid (timing attack).
@@ -266,9 +287,34 @@ app.post('/api/auth/login', async (c) => {
       ? await verifyPassword(password, user.password_hash, user.password_salt)
       : await verifyPassword(password, '', 'AAAAAAAAAAAAAAAAAAAAAA==');
 
-    if (!user || !isValid) {
+    if (!user || !isValid || user.is_active !== 1) {
+      // Tambah counter gagal hanya kalau user ditemukan (tidak ada gunanya
+      // track attempts untuk username yang tidak ada — tidak ada yang dikunci).
+      if (user) {
+        const attempts = (user.failed_attempts ?? 0) + 1;
+        const shouldLock = attempts >= LOGIN_MAX_ATTEMPTS;
+        const lockedUntil = shouldLock
+          ? new Date(Date.now() + LOGIN_LOCK_MINUTES * 60 * 1000).toISOString()
+          : null;
+        await db
+          .prepare('UPDATE users SET failed_attempts = ?, locked_until = ? WHERE id = ?')
+          .bind(attempts, lockedUntil ?? user.locked_until ?? null, user.id)
+          .run();
+        if (shouldLock) {
+          return c.json(
+            { success: false, error: `Terlalu banyak percobaan login gagal. Akun dikunci selama ${LOGIN_LOCK_MINUTES} menit.` },
+            429
+          );
+        }
+      }
       return c.json({ success: false, error: 'Username atau password salah' }, 401);
     }
+
+    // Login sukses — reset counter
+    await db
+      .prepare('UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = ?')
+      .bind(user.id)
+      .run();
 
     const exp = Math.floor(Date.now() / 1000) + 8 * 60 * 60; // 8 jam, sesuai shift kasir
     const token = await signToken(
