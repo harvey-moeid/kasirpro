@@ -322,8 +322,11 @@ app.post('/api/auth/login', async (c) => {
       c.env.JWT_SECRET
     );
 
+    // Pakai cookie path sesuai mount point: '/kasir' kalau diakses lewat
+    // custom domain path-based, '/' kalau akses langsung *.workers.dev.
+    const cookiePath = c.req.header('X-Kasir-Base') ?? '/';
     setCookie(c, SESSION_COOKIE, token, {
-      path: '/',
+      path: cookiePath,
       httpOnly: true,
       secure: true,
       sameSite: 'Strict',
@@ -347,7 +350,8 @@ app.post('/api/auth/login', async (c) => {
 });
 
 app.post('/api/auth/logout', async (c) => {
-  deleteCookie(c, SESSION_COOKIE, { path: '/' });
+  const cookiePath = c.req.header('X-Kasir-Base') ?? '/';
+  deleteCookie(c, SESSION_COOKIE, { path: cookiePath });
   return c.json({ success: true });
 });
 
@@ -2794,9 +2798,18 @@ export default {
     }
 
     const urlBersih = dipasangDiKasir ? tanpaPrefixKasir(url) : url;
-    const requestBersih = dipasangDiKasir
-      ? new Request(urlBersih.toString(), request)
-      : request;
+    // Inject X-Kasir-Base supaya handler di dalam app (login, logout) tahu
+    // apakah Worker ini di-mount di /kasir (custom domain path-based) atau
+    // di root (akses langsung *.workers.dev). Dipakai untuk set cookie path
+    // yang benar: '/kasir' saat di-mount di path, '/' saat di root.
+    const headersWithBase = new Headers(request.headers);
+    if (dipasangDiKasir) headersWithBase.set('X-Kasir-Base', BASE_PATH);
+    const requestBersih = new Request(urlBersih.toString(), {
+      method: request.method,
+      headers: headersWithBase,
+      body: ['GET', 'HEAD'].includes(request.method) ? undefined : request.body,
+      redirect: 'manual',
+    });
 
     // /api/* -> logika Hono (`app`). Selain itu -> file statis dari ASSETS.
     if (urlBersih.pathname.startsWith('/api/')) {
