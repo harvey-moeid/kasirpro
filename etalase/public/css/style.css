@@ -17,7 +17,20 @@
   --gold-400: #dab86c;
   --gold-300: #e8cd8f;
   --gold-100: #f4e8cc;
-  /* --paper/--paper-dim/--paper-card dulu krem terang (tema "kertas nota"
+  /* Aksesibilitas: elemen hanya untuk screen reader, tidak terlihat secara visual */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
      siang hari). Sekarang jadi permukaan navy gelap ("nota di bawah lampu
      meja butik malam hari") -- nama variabel sengaja TIDAK diganti supaya
      seluruh rule di bawah & di admin.css otomatis ikut berubah. */
@@ -263,7 +276,7 @@ input, textarea, select { font-family: inherit; }
   background-size: 12px 12px; background-position: 0 3px; transform: translateY(4px);
 }
 .product-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.product-thumb .placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-size: 11.5px; font-family: var(--font-mono); }
+.product-thumb .placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--ink-soft); font-size: 11.5px; font-family: var(--font-mono); }
 .badge-soldout {
   position: absolute; top: 8px; left: 8px; background: linear-gradient(135deg, #c94b44, #8f2c27); color: #fff;
   font-family: var(--font-mono); font-size: 10px; font-weight: 700; padding: 3px 9px;
