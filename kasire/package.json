@@ -7,7 +7,7 @@
     "dev": "npm run build:css && wrangler dev",
     "build:css": "tailwindcss -i ./src-css/input.css -o ./public/styles.css --minify",
     "watch:css": "tailwindcss -i ./src-css/input.css -o ./public/styles.css --watch",
-    "deploy": "npm run build:css && wrangler deploy",
+    "deploy": "npm run build:css && wrangler d1 migrations apply kasirpro --remote && wrangler deploy",
     "db:migrate:local": "wrangler d1 migrations apply kasire --local",
     "db:migrate:remote": "wrangler d1 migrations apply kasire --remote",
     "typecheck": "tsc --noEmit"
