@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#05091c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -104,7 +104,7 @@
     </div>
 
     <!-- Bottom Sheet Form Login (Bawah) -->
-    <div class="login-form-panel bg-ink-900 w-full rounded-t-[2.5rem] px-8 pt-10 pb-[calc(2rem+var(--safe-bottom))] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] relative z-10 animate-slide-up flex flex-col justify-center">
+    <main class="login-form-panel bg-ink-900 w-full rounded-t-[2.5rem] px-8 pt-10 pb-[calc(2rem+var(--safe-bottom))] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] relative z-10 animate-slide-up flex flex-col justify-center">
         
         <h2 class="text-2xl font-extrabold text-ink-50 mb-2">Selamat Datang</h2>
         <p class="text-ink-300 text-sm font-medium mb-8">Masuk untuk memulai shift Anda hari ini.</p>
@@ -142,8 +142,8 @@
                         placeholder="Masukkan sandi">
                     
                     <!-- Toggle Show/Hide Password -->
-                    <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-4 flex items-center text-ink-400 hover:text-blue-600 active:scale-90 transition-transform">
-                        <i class="fas fa-eye" id="eye-icon"></i>
+                    <button type="button" aria-label="Tampilkan atau sembunyikan kata sandi" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-4 flex items-center text-ink-400 hover:text-blue-600 active:scale-90 transition-transform">
+                        <i class="fas fa-eye" id="eye-icon" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
@@ -159,7 +159,7 @@
         <p class="text-center text-[10px] text-ink-400 mt-8 font-medium">
             Sistem dilindungi enkripsi PBKDF2-SHA256.
         </p>
-    </div>
+    </main>
 </div><!-- /.login-card -->
 
     <script>

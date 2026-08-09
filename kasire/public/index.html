@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <!-- Konfigurasi Krusial untuk Mobile PWA -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#05091c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -170,12 +170,12 @@
                 <button id="btn-shift" onclick="openTutupShiftModal()" title="Tutup Shift" class="h-10 px-3 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center gap-1.5 active:scale-95 transition text-[11px] font-bold hidden">
                     <i class="fas fa-cash-register"></i> <span id="shift-badge-text">Shift</span>
                 </button>
-                <button onclick="toggleHoldList()" class="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center relative active:scale-95 transition">
-                    <i class="fas fa-pause"></i>
+                <button aria-label="Transaksi ditahan" onclick="toggleHoldList()" class="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center relative active:scale-95 transition">
+                    <i class="fas fa-pause" aria-hidden="true"></i>
                     <span id="badge-hold" class="absolute -top-1 -right-1 bg-orange-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold hidden border border-blue-600">0</span>
                 </button>
-                <button id="btn-network" onclick="manualRetrySync()" class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white active:scale-95 transition shadow-lg shadow-green-500/30">
-                    <i class="fas fa-wifi"></i>
+                <button id="btn-network" aria-label="Status sinkronisasi jaringan" onclick="manualRetrySync()" class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white active:scale-95 transition shadow-lg shadow-green-500/30">
+                    <i class="fas fa-wifi" aria-hidden="true"></i>
                 </button>
             </div>
         </div>
@@ -183,9 +183,9 @@
         <div class="mt-4 flex gap-2 items-stretch">
             <div class="relative flex-1">
                 <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-ink-400"></i>
-                <input type="text" id="search-input" placeholder="Cari nama atau barcode..." class="w-full h-full bg-ink-900 text-ink-50 pl-11 pr-10 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 font-medium text-sm placeholder-ink-500 transition">
-                <button onclick="document.getElementById('search-input').value=''; renderProducts();" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-ink-400 active:text-ink-200">
-                    <i class="fas fa-times-circle"></i>
+                <input type="text" id="search-input" placeholder="Cari nama atau barcode..." class="w-full h-full bg-ink-900 text-ink-50 pl-11 pr-10 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 font-medium text-sm placeholder-ink-400 transition">
+                <button aria-label="Hapus pencarian" onclick="document.getElementById('search-input').value=''; renderProducts();" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-ink-400 active:text-ink-200">
+                    <i class="fas fa-times-circle" aria-hidden="true"></i>
                 </button>
             </div>
             <button onclick="openScanModal()" title="Scan barcode dengan kamera" class="shrink-0 w-12 bg-ink-900 text-blue-600 rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center text-lg">
@@ -216,7 +216,7 @@
                 <span id="fc-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-ink-950">0</span>
             </div>
             <div>
-                <p class="text-[10px] font-medium text-ink-500">Total Pembayaran</p>
+                <p class="text-[10px] font-medium text-ink-300">Total Pembayaran</p>
                 <p id="fc-total" class="font-extrabold text-lg leading-none mt-0.5 accent-gold">Rp 0</p>
             </div>
         </div>
@@ -234,14 +234,14 @@
         
         <div class="p-4 border-b border-ink-800 flex justify-between items-center bg-ink-900 rounded-t-3xl shrink-0">
             <div class="flex items-center gap-3">
-                <button onclick="toggleCartDrawer()" class="w-8 h-8 flex items-center justify-center bg-ink-800 rounded-full active:bg-ink-700">
-                    <i class="fas fa-chevron-down text-ink-200"></i>
+                <button aria-label="Tutup keranjang" onclick="toggleCartDrawer()" class="w-8 h-8 flex items-center justify-center bg-ink-800 rounded-full active:bg-ink-700">
+                    <i class="fas fa-chevron-down text-ink-200" aria-hidden="true"></i>
                 </button>
                 <h2 class="font-extrabold text-lg">Pesanan Aktif</h2>
             </div>
             <div class="flex gap-2">
-                <button onclick="holdCart()" class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 active:bg-orange-500 active:text-white flex items-center justify-center transition"><i class="fas fa-pause"></i></button>
-                <button onclick="clearCart(true)" class="w-10 h-10 rounded-xl bg-red-50 text-red-500 active:bg-red-500 active:text-white flex items-center justify-center transition"><i class="fas fa-trash-alt"></i></button>
+                <button aria-label="Tahan transaksi" onclick="holdCart()" class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 active:bg-orange-500 active:text-white flex items-center justify-center transition"><i class="fas fa-pause" aria-hidden="true"></i></button>
+                <button aria-label="Hapus keranjang" onclick="clearCart(true)" class="w-10 h-10 rounded-xl bg-red-50 text-red-500 active:bg-red-500 active:text-white flex items-center justify-center transition"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
             </div>
         </div>
         
@@ -297,7 +297,7 @@
     <!-- 2. FULLSCREEN NUMPAD MODAL (CASH) -->
     <div id="numpad-modal" class="fixed inset-0 bg-ink-900 z-[60] flex flex-col drawer drawer-closed">
         <div class="header-navy text-white p-6 pt-10 text-center relative shrink-0">
-            <button onclick="cancelNumpad()" class="absolute left-4 top-10 w-10 h-10 flex items-center justify-center bg-white/20 rounded-full active:bg-white/40 transition"><i class="fas fa-arrow-left"></i></button>
+            <button aria-label="Batal" onclick="cancelNumpad()" class="absolute left-4 top-10 w-10 h-10 flex items-center justify-center bg-white/20 rounded-full active:bg-white/40 transition"><i class="fas fa-arrow-left" aria-hidden="true"></i></button>
             <p class="text-xs font-medium text-blue-200 mb-1">Total Tagihan</p>
             <h2 class="text-4xl font-extrabold font-mono accent-gold" id="numpad-tagihan">Rp 0</h2>
         </div>
@@ -329,7 +329,7 @@
                 <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('7')">7</button>
                 <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('8')">8</button>
                 <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('9')">9</button>
-                <button class="py-4 sm:py-5 bg-ink-700 rounded-2xl font-bold text-2xl text-red-500 active:scale-95 transition" onclick="typeNumpad('C')"><i class="fas fa-backspace"></i></button>
+                <button aria-label="Hapus angka" class="py-4 sm:py-5 bg-ink-700 rounded-2xl font-bold text-2xl text-red-500 active:scale-95 transition" onclick="typeNumpad('C')"><i class="fas fa-backspace" aria-hidden="true"></i></button>
                 <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('0')">0</button>
                 <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('000')">000</button>
             </div>
@@ -429,7 +429,7 @@
         <div class="bg-ink-900 rounded-3xl w-full max-w-sm shadow-2xl animate-slide-up flex flex-col max-h-[90vh]">
             <div class="p-5 border-b border-ink-800 flex justify-between items-center shrink-0">
                 <h3 class="font-bold text-lg text-ink-50">Tutup Shift</h3>
-                <button onclick="closeTutupShiftModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+                <button aria-label="Tutup" onclick="closeTutupShiftModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
 
             <div class="p-5 space-y-4 overflow-y-auto hide-scroll">
@@ -551,7 +551,7 @@
                     <h3 class="font-bold text-lg text-ink-50">Split Pembayaran</h3>
                     <p class="text-[11px] text-ink-400 font-medium">Total tagihan: <span id="split-tagihan" class="font-bold text-blue-600">Rp 0</span></p>
                 </div>
-                <button onclick="closeSplitModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+                <button aria-label="Tutup" onclick="closeSplitModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
 
             <div id="split-rows" class="p-5 space-y-3 overflow-y-auto hide-scroll flex-1"></div>
@@ -578,7 +578,7 @@
         <div class="bg-ink-900 rounded-3xl w-full max-w-sm p-5 shadow-2xl animate-slide-up">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-bold text-lg text-ink-50">Pesanan Ditahan</h3>
-                <button onclick="toggleHoldList()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+                <button aria-label="Tutup daftar tahan" onclick="toggleHoldList()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
             <div id="hold-list" class="space-y-3 max-h-[50vh] overflow-y-auto hide-scroll"></div>
         </div>
@@ -589,7 +589,7 @@
         <div class="bg-ink-900 rounded-3xl w-full max-w-sm p-5 shadow-2xl animate-slide-up">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-bold text-lg text-ink-50" id="account-nama">Menu Akun</h3>
-                <button onclick="toggleAccountMenu()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+                <button aria-label="Tutup menu akun" onclick="toggleAccountMenu()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
             <div class="space-y-2">
                 <button onclick="toggleAccountMenu(); openReturSearchModal();" class="w-full flex items-center gap-3 p-3 rounded-2xl bg-ink-950 hover:bg-ink-800 active:scale-95 transition text-left font-bold text-sm text-ink-100">
@@ -613,7 +613,7 @@
         <div class="bg-ink-900 rounded-3xl w-full max-w-sm shadow-2xl max-h-[85vh] flex flex-col">
             <div class="p-5 border-b border-ink-800 flex items-center justify-between shrink-0">
                 <h3 class="font-bold text-lg text-ink-50">Retur Transaksi</h3>
-                <button onclick="closeReturSearchModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+                <button aria-label="Tutup" onclick="closeReturSearchModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
             <div class="p-4 shrink-0">
                 <input id="retur-search-input" type="text" placeholder="Cari kode transaksi..." autocomplete="off"
@@ -632,7 +632,7 @@
                     <h3 class="font-bold text-lg text-ink-50 truncate" id="retur-detail-kode">-</h3>
                     <p class="text-xs text-ink-400" id="retur-detail-meta">-</p>
                 </div>
-                <button onclick="closeReturDetailModal()" class="shrink-0 w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+                <button aria-label="Tutup" onclick="closeReturDetailModal()" class="shrink-0 w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
             <div class="p-4 overflow-y-auto hide-scroll flex-1">
                 <p class="text-[10px] font-bold text-ink-400 uppercase mb-2">Item — centang untuk diretur</p>
@@ -702,7 +702,7 @@
         <div class="bg-ink-900 rounded-3xl w-full max-w-sm p-5 shadow-2xl animate-slide-up">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-bold text-lg text-ink-50">Ganti Password</h3>
-                <button onclick="closeChangePasswordModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+                <button aria-label="Tutup" onclick="closeChangePasswordModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
             <form id="form-password" class="space-y-3" onsubmit="submitChangePassword(event)">
                 <div>
@@ -729,7 +729,7 @@
         <div class="relative w-full h-full flex flex-col">
             <div class="flex items-center justify-between px-4 pt-[calc(1rem+var(--safe-top))] pb-3 bg-gradient-to-b from-black/70 to-transparent absolute top-0 left-0 right-0 z-10">
                 <h3 class="text-white font-bold text-sm"><i class="fas fa-barcode mr-1.5"></i>Scan Barcode</h3>
-                <button onclick="closeScanModal()" class="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center text-white active:bg-white/25 transition"><i class="fas fa-times"></i></button>
+                <button aria-label="Tutup scanner" onclick="closeScanModal()" class="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center text-white active:bg-white/25 transition"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
 
             <div class="flex-1 relative overflow-hidden bg-black flex items-center justify-center">
@@ -1908,9 +1908,9 @@
                         <div class="flex flex-col items-end shrink-0 gap-2">
                             <p class="font-bold text-xs text-ink-50">${formatRp(netBaris)}</p>
                             <div class="flex items-center gap-2 bg-ink-950 rounded-lg border border-ink-700 p-1">
-                                <button onclick="updateQty(${index}, -1)" class="w-6 h-6 flex items-center justify-center bg-ink-900 rounded shadow-sm text-ink-200 active:scale-95"><i class="fas fa-minus text-[10px]"></i></button>
-                                <button onclick="editQtyManual(${index})" class="w-8 text-center text-xs font-bold active:text-blue-600 transition">${item.qty}</button>
-                                <button onclick="updateQty(${index}, 1)" class="w-6 h-6 flex items-center justify-center bg-ink-900 rounded shadow-sm text-ink-200 active:scale-95"><i class="fas fa-plus text-[10px]"></i></button>
+                                <button aria-label="Kurangi jumlah" onclick="updateQty(${index}, -1)" class="w-6 h-6 flex items-center justify-center bg-ink-900 rounded shadow-sm text-ink-200 active:scale-95"><i class="fas fa-minus text-[10px]" aria-hidden="true"></i></button>
+                                <button aria-label="Edit jumlah manual" onclick="editQtyManual(${index})" class="w-8 text-center text-xs font-bold active:text-blue-600 transition">${item.qty}</button>
+                                <button aria-label="Tambah jumlah" onclick="updateQty(${index}, 1)" class="w-6 h-6 flex items-center justify-center bg-ink-900 rounded shadow-sm text-ink-200 active:scale-95"><i class="fas fa-plus text-[10px]" aria-hidden="true"></i></button>
                             </div>
                         </div>
                     </div>`;
