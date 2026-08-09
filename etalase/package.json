@@ -1,0 +1,21 @@
+{
+  "name": "etalase",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "release": "npm run db:migrate:remote && wrangler deploy",
+    "release:safe": "npm run db:migrate:local && npm run db:migrate:remote && wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply kasire --local",
+    "db:migrate:remote": "wrangler d1 migrations apply kasire --remote"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260713.1",
+    "typescript": "^5.5.4",
+    "wrangler": "^4.110.0"
+  },
+  "dependencies": {
+    "hono": "^4.6.3"
+  }
+}

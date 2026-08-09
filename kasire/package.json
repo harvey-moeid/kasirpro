@@ -1,0 +1,24 @@
+{
+  "name": "kasire",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run build:css && wrangler dev",
+    "build:css": "tailwindcss -i ./src-css/input.css -o ./public/styles.css --minify",
+    "watch:css": "tailwindcss -i ./src-css/input.css -o ./public/styles.css --watch",
+    "deploy": "npm run build:css && wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply kasire --local",
+    "db:migrate:remote": "wrangler d1 migrations apply kasire --remote",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260714.1",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.6.0",
+    "wrangler": "^4.110.0"
+  }
+}

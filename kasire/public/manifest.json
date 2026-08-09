@@ -1,0 +1,18 @@
+{
+  "name": "Kasir Cloud - Sistem Kasir",
+  "short_name": "Kasir Cloud",
+  "description": "Sistem kasir (POS) berbasis cloud dengan dukungan mode offline.",
+  "start_url": "login.html",
+  "scope": "/kasir/",
+  "display": "standalone",
+  "background_color": "#05091c",
+  "theme_color": "#05091c",
+  "orientation": "any",
+  "lang": "id",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

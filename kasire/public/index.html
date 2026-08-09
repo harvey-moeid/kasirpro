@@ -1,0 +1,2922 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <!-- Konfigurasi Krusial untuk Mobile PWA -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#05091c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <title>POS Kasir Mobile PWA</title>
+    
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --navy-900: #0a1228;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f3f4f9;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            padding-top: var(--safe-top);
+            /* Override class h-screen (height:100vh) bawaan Tailwind di elemen ini —
+               100vh di mobile browser dihitung dari viewport maksimum (address bar
+               disembunyikan), bukan area yang benar-benar terlihat, sehingga elemen
+               absolute yang menempel ke body (mis. #floating-cart) bisa terdorong
+               ke luar layar & perlu discroll. 100dvh mengikuti viewport aktual. */
+            height: 100dvh;
+        }
+        h1, h2, h3, .font-display { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; }
+
+        /* Header navy dengan gradasi + garis emas tipis di bawah */
+        .header-navy {
+            background: linear-gradient(135deg, #16244d 0%, #1c2f61 55%, #223a78 100%);
+            position: relative;
+        }
+        .header-navy::after {
+            content: "";
+            position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, #d6ac42 25%, #f0dc93 50%, #d6ac42 75%, transparent);
+            opacity: .8;
+        }
+        .accent-gold { color: #c2932e; }
+        .btn-gold {
+            background: linear-gradient(135deg, #d6ac42, #a17423);
+            box-shadow: 0 8px 20px -6px rgba(162,116,35,0.55);
+        }
+        .card-hover { transition: transform .15s ease, box-shadow .15s ease; }
+        @media (hover:hover) {
+            .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -12px rgba(10,18,40,.25); }
+        }
+
+        /* ============================================================
+           SHELL LAYOUT (semua ukuran layar). FIX SCROLL: aturan ini
+           sebelumnya cuma ada di dalam media query (min-width:1024px),
+           jadi di HP #app-col cuma <div> polos tanpa tinggi/flex sama
+           sekali. Akibatnya <main class="flex-1 overflow-y-auto"> tidak
+           punya parent flex + tinggi terbatas, overflow-y-auto-nya tidak
+           pernah aktif, dan karena body{overflow:hidden} juga mengunci
+           scroll di level halaman, area produk jadi TIDAK BISA discroll
+           di HP. Memindahkan aturan ke luar media query mengunci tinggi
+           shell di semua ukuran layar, jadi <main> bisa scroll internal.
+           ============================================================ */
+        /* height:100vh di mobile browser dihitung dari viewport MAKSIMUM (seolah
+           address bar disembunyikan), bukan viewport yang benar-benar terlihat
+           saat address bar masih tampil — akibatnya elemen di bagian bawah
+           (floating-cart) terdorong ke luar layar & perlu discroll. 100dvh
+           (dynamic viewport height) mengikuti ukuran viewport aktual yang
+           terlihat. Baris 100vh dipertahankan sebagai fallback untuk browser
+           lama yang belum dukung dvh (akan langsung di-override kalau didukung). */
+        #app-col { display: flex; flex-direction: column; height: 100vh; height: 100dvh; flex: 1 1 auto; min-width: 0; }
+        #main-shell { display: flex; flex-direction: row; height: 100vh; height: 100dvh; width: 100vw; }
+
+        /* ============================================================
+           DESKTOP LAYOUT (>=1024px) — keranjang jadi panel statis di
+           kanan, area produk lebih lega dengan kolom lebih banyak.
+           Struktur & ID tidak berubah, hanya perilaku tampilan.
+           ============================================================ */
+        @media (min-width: 1024px) {
+            #floating-cart { display: none !important; }
+            #cart-drawer-bg { display: none !important; }
+
+            #cart-drawer {
+                position: static !important;
+                transform: none !important;
+                height: 100vh !important;
+                width: 400px;
+                max-width: 400px;
+                flex-shrink: 0;
+                border-radius: 0 !important;
+                box-shadow: -12px 0 30px -18px rgba(10,18,40,.35);
+                border-left: 1px solid #e6e9f2;
+            }
+
+            #product-grid { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
+        }
+        @media (min-width: 1440px) {
+            #product-grid { grid-template-columns: repeat(5, minmax(0,1fr)) !important; }
+        }
+        .pb-safe { padding-bottom: calc(1rem + var(--safe-bottom)); }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Drawer Animations */
+        .drawer { transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
+        .drawer-open { transform: translateY(0%); }
+        .drawer-closed { transform: translateY(100%); }
+        
+        @keyframes tapEffect {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.92); }
+        }
+        .animate-tap { animation: tapEffect 0.15s ease-out; }
+        
+        @keyframes slideUpFade {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up { animation: slideUpFade 0.3s ease-out forwards; }
+        
+        .thermal-paper {
+            background: #fff;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .thermal-paper::before {
+            content: ""; position: absolute; top: -8px; left: 0; right: 0; height: 8px;
+            background: radial-gradient(circle, transparent, transparent 50%, #fff 50%, #fff 100%) 0 0 / 16px 16px;
+        }
+
+        /* Preview di layar (sebelum cetak) juga ikut menyesuaikan lebar kertas */
+        #print-area.paper-80 { max-width: 80mm; margin: 0 auto; }
+    </style>
+</head>
+<body class="w-screen flex flex-col relative text-ink-50">
+<div id="main-shell">
+<div id="app-col">
+    <!-- HEADER -->
+    <header class="header-navy text-white pb-4 px-4 lg:px-8 lg:pt-2 shadow-md z-20 shrink-0 rounded-b-2xl lg:rounded-b-none relative">
+        <div class="flex justify-between items-center pt-3">
+            <div class="flex items-center gap-3">
+                <div onclick="toggleAccountMenu()" title="Akun" class="w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm active:scale-95 transition cursor-pointer p-2" style="background:linear-gradient(135deg,#d6ac42,#a17423)">
+                    <img src="icons/mark-white.svg" alt="muidsoft" class="w-full h-full">
+                </div>
+                <div>
+                    <h1 id="app-title-header" class="font-display font-extrabold text-lg leading-tight tracking-wide">KASIR CLOUD</h1>
+                    <p class="text-[10px] text-blue-200 font-medium opacity-90" id="header-status">
+                        <i class="fas fa-circle text-[8px] text-green-400 mr-1 shadow-[0_0_5px_#4ade80]"></i>Online • JKT
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button id="btn-shift" onclick="openTutupShiftModal()" title="Tutup Shift" class="h-10 px-3 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center gap-1.5 active:scale-95 transition text-[11px] font-bold hidden">
+                    <i class="fas fa-cash-register"></i> <span id="shift-badge-text">Shift</span>
+                </button>
+                <button onclick="toggleHoldList()" class="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center relative active:scale-95 transition">
+                    <i class="fas fa-pause"></i>
+                    <span id="badge-hold" class="absolute -top-1 -right-1 bg-orange-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold hidden border border-blue-600">0</span>
+                </button>
+                <button id="btn-network" onclick="manualRetrySync()" class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white active:scale-95 transition shadow-lg shadow-green-500/30">
+                    <i class="fas fa-wifi"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="mt-4 flex gap-2 items-stretch">
+            <div class="relative flex-1">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-ink-400"></i>
+                <input type="text" id="search-input" placeholder="Cari nama atau barcode..." class="w-full h-full bg-ink-900 text-ink-50 pl-11 pr-10 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 font-medium text-sm placeholder-ink-500 transition">
+                <button onclick="document.getElementById('search-input').value=''; renderProducts();" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-ink-400 active:text-ink-200">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            </div>
+            <button onclick="openScanModal()" title="Scan barcode dengan kamera" class="shrink-0 w-12 bg-ink-900 text-blue-600 rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center text-lg">
+                <i class="fas fa-barcode"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- AREA PRODUK -->
+    <main class="flex-1 overflow-y-auto hide-scroll p-4 lg:p-6 pb-32 lg:pb-8 bg-ink-950 relative">
+        <!-- Kategori Filter -->
+        <div class="flex gap-2 overflow-x-auto hide-scroll mb-4 pb-1" id="category-filters">
+            <!-- Diisi dinamis oleh renderCategoryFilters() berdasarkan data produk dari API -->
+        </div>
+
+        <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <!-- JS Render -->
+        </div>
+    </main>
+
+    <!-- FLOATING CART BAR -->
+    <div id="floating-cart" onclick="toggleCartDrawer()" class="absolute bottom-6 left-4 right-4 text-white p-4 rounded-2xl shadow-2xl flex justify-between items-center z-30 transform transition-all active:scale-[0.98] cursor-pointer hidden pb-safe" style="background:linear-gradient(135deg,#16244d,#1c2f61)">
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <div class="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-inner">
+                    <i class="fas fa-shopping-bag text-lg"></i>
+                </div>
+                <span id="fc-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-ink-950">0</span>
+            </div>
+            <div>
+                <p class="text-[10px] font-medium text-ink-500">Total Pembayaran</p>
+                <p id="fc-total" class="font-extrabold text-lg leading-none mt-0.5 accent-gold">Rp 0</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 font-bold text-sm bg-white/10 active:bg-white/20 px-3 py-2 rounded-xl transition">
+            Detail <i class="fas fa-chevron-up text-[10px]"></i>
+        </div>
+    </div>
+
+</div><!-- /#app-col -->
+
+
+    <!-- 1. CART DRAWER -->
+    <div id="cart-drawer-bg" onclick="toggleCartDrawer()" class="fixed inset-0 bg-ink-950/60 z-40 opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm"></div>
+    <div id="cart-drawer" class="fixed bottom-0 left-0 right-0 bg-ink-900 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-50 flex flex-col h-[85vh] drawer drawer-closed">
+        
+        <div class="p-4 border-b border-ink-800 flex justify-between items-center bg-ink-900 rounded-t-3xl shrink-0">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleCartDrawer()" class="w-8 h-8 flex items-center justify-center bg-ink-800 rounded-full active:bg-ink-700">
+                    <i class="fas fa-chevron-down text-ink-200"></i>
+                </button>
+                <h2 class="font-extrabold text-lg">Pesanan Aktif</h2>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="holdCart()" class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 active:bg-orange-500 active:text-white flex items-center justify-center transition"><i class="fas fa-pause"></i></button>
+                <button onclick="clearCart(true)" class="w-10 h-10 rounded-xl bg-red-50 text-red-500 active:bg-red-500 active:text-white flex items-center justify-center transition"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        </div>
+        
+        <div id="cart-items" class="flex-1 overflow-y-auto hide-scroll p-4 space-y-3 bg-ink-950/50">
+            <!-- Items Rendered Here -->
+        </div>
+
+        <div class="p-5 bg-ink-900 border-t border-ink-800 shrink-0 pb-safe shadow-[0_-5px_15px_rgba(0,0,0,0.03)]">
+            <div class="flex justify-between text-ink-300 text-xs font-medium mb-1">
+                <span>Subtotal</span><span id="cart-subtotal">Rp 0</span>
+            </div>
+            <div class="flex justify-between items-center text-ink-300 text-xs font-medium mb-1">
+                <span>Diskon</span>
+                <button onclick="openDiskonModal()" id="cart-diskon-btn" class="text-red-500 font-bold active:opacity-60 transition flex items-center gap-1">
+                    <span id="cart-diskon">- Rp 0</span> <i class="fas fa-pen text-[9px] opacity-60"></i>
+                </button>
+            </div>
+            <div class="flex justify-between items-center text-ink-300 text-xs font-medium mb-3 pb-3 border-b border-ink-800">
+                <span>Pajak</span>
+                <button onclick="openPajakModal()" id="cart-pajak-btn" class="text-ink-200 font-bold active:opacity-60 transition flex items-center gap-1">
+                    <span id="cart-tax">Rp 0</span> <i class="fas fa-pen text-[9px] opacity-60"></i>
+                </button>
+            </div>
+            <div class="flex justify-between items-end mb-4">
+                <span class="text-ink-50 font-bold">Total Tagihan</span>
+                <span id="cart-total" class="font-extrabold text-2xl accent-gold font-mono">Rp 0</span>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="grid grid-cols-4 gap-2 mb-4" id="payment-methods">
+                <button class="pay-method active py-2.5 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 font-bold flex flex-col items-center gap-1 active:scale-95 transition" data-method="cash">
+                    <i class="fas fa-money-bill-wave"></i> <span class="text-[10px]">TUNAI</span>
+                </button>
+                <button class="pay-method py-2.5 rounded-xl border border-ink-700 text-ink-300 font-bold flex flex-col items-center gap-1 active:scale-95 transition" data-method="qris">
+                    <i class="fas fa-qrcode"></i> <span class="text-[10px]">QRIS</span>
+                </button>
+                <button class="pay-method py-2.5 rounded-xl border border-ink-700 text-ink-300 font-bold flex flex-col items-center gap-1 active:scale-95 transition" data-method="debit">
+                    <i class="fas fa-credit-card"></i> <span class="text-[10px]">DEBIT</span>
+                </button>
+                <button class="pay-method py-2.5 rounded-xl border border-ink-700 text-ink-300 font-bold flex flex-col items-center gap-1 active:scale-95 transition" data-method="split">
+                    <i class="fas fa-layer-group"></i> <span class="text-[10px]">SPLIT</span>
+                </button>
+            </div>
+
+            <button onclick="triggerPayment()" id="btn-pay" class="btn-gold w-full text-[#16244d] font-bold py-4 rounded-2xl active:scale-[0.98] transition flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:active:scale-100">
+                Bayar Sekarang <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    </div><!-- /#main-shell -->
+
+    <!-- 2. FULLSCREEN NUMPAD MODAL (CASH) -->
+    <div id="numpad-modal" class="fixed inset-0 bg-ink-900 z-[60] flex flex-col drawer drawer-closed">
+        <div class="header-navy text-white p-6 pt-10 text-center relative shrink-0">
+            <button onclick="cancelNumpad()" class="absolute left-4 top-10 w-10 h-10 flex items-center justify-center bg-white/20 rounded-full active:bg-white/40 transition"><i class="fas fa-arrow-left"></i></button>
+            <p class="text-xs font-medium text-blue-200 mb-1">Total Tagihan</p>
+            <h2 class="text-4xl font-extrabold font-mono accent-gold" id="numpad-tagihan">Rp 0</h2>
+        </div>
+        
+        <div class="flex-1 flex flex-col p-5 bg-ink-950 pb-safe">
+            <p class="text-[10px] font-bold text-ink-400 uppercase text-center mb-1">Uang Diterima</p>
+            <input type="text" id="input-diterima" readonly class="w-full text-center text-4xl font-extrabold text-ink-50 bg-transparent border-none focus:outline-none mb-2 font-mono h-12" placeholder="Rp 0">
+            
+            <div class="flex justify-center items-center mb-6 gap-2 bg-ink-900 py-2 rounded-xl border border-ink-700 shadow-sm">
+                <span class="text-xs font-bold text-ink-300">Kembalian:</span>
+                <span class="text-xl font-extrabold text-orange-500 font-mono" id="numpad-kembalian">Rp 0</span>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2 mb-4">
+                <button class="py-3 bg-emerald-100 text-emerald-700 font-bold rounded-xl active:bg-emerald-200 active:scale-95 text-sm transition" onclick="setUangDiterima('pas')">PAS</button>
+                <button class="py-3 bg-ink-900 border border-ink-700 text-ink-100 font-bold rounded-xl active:bg-ink-800 active:scale-95 text-sm transition" onclick="addUang(20000)">20K</button>
+                <button class="py-3 bg-ink-900 border border-ink-700 text-ink-100 font-bold rounded-xl active:bg-ink-800 active:scale-95 text-sm transition" onclick="addUang(50000)">50K</button>
+                <button class="py-3 bg-ink-900 border border-ink-700 text-ink-100 font-bold rounded-xl active:bg-ink-800 active:scale-95 text-sm transition" onclick="addUang(100000)">100K</button>
+            </div>
+
+            <!-- Touch-optimized Grid -->
+            <div class="grid grid-cols-3 gap-3 flex-1 mb-4 content-end">
+                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('1')">1</button>
+                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('2')">2</button>
+                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('3')">3</button>
+                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('4')">4</button>
+                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('5')">5</button>
+                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('6')">6</button>
+                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('7')">7</button>
+                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('8')">8</button>
+                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('9')">9</button>
+                <button class="py-4 sm:py-5 bg-ink-700 rounded-2xl font-bold text-2xl text-red-500 active:scale-95 transition" onclick="typeNumpad('C')"><i class="fas fa-backspace"></i></button>
+                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('0')">0</button>
+                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('000')">000</button>
+            </div>
+
+            <button onclick="processFinalPayment()" id="btn-confirm-pay" class="btn-gold w-full text-[#16244d] font-bold py-4 rounded-2xl active:scale-95 transition flex items-center justify-center gap-2 text-lg disabled:bg-ink-600 disabled:shadow-none disabled:text-ink-300">
+                Konfirmasi
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. STRUK THERMAL MODAL -->
+    <div id="modal-receipt" class="fixed inset-0 bg-ink-950/80 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="w-full max-w-sm flex flex-col items-center animate-slide-up">
+            <div id="print-area" class="thermal-paper w-full p-5 text-ink-50 font-mono text-sm max-h-[70vh] overflow-y-auto hide-scroll rounded-b">
+                <div class="text-center border-b border-dashed border-ink-500 pb-3 mb-3">
+                    <h2 id="receipt-toko-nama" class="font-extrabold text-base">KASIR CLOUD</h2>
+                    <p id="receipt-toko-alamat" class="text-[10px]">Jl. Sudirman No. 1, Jakarta</p>
+                </div>
+                
+                <div class="text-[10px] flex justify-between mb-3 border-b border-dashed border-ink-500 pb-2">
+                    <div>
+                        <p id="receipt-date">00/00/0000 00:00</p>
+                        <p id="receipt-trx" class="font-bold">TRX-</p>
+                    </div>
+                    <div class="text-right">
+                        <p id="receipt-kasir-nama">Kasir: -</p>
+                        <p id="receipt-method">TUNAI</p>
+                    </div>
+                </div>
+                
+                <div id="receipt-items" class="space-y-2 mb-3 text-[11px]"></div>
+                
+                <div class="border-t border-dashed border-ink-500 pt-2 text-[11px] space-y-1">
+                    <div class="flex justify-between"><span>Subtotal:</span><span id="r-subtotal">Rp0</span></div>
+                    <div class="flex justify-between" id="r-diskon-row" style="display:none"><span>Diskon:</span><span id="r-diskon" class="text-red-500">- Rp0</span></div>
+                    <div class="flex justify-between" id="r-tax-row" style="display:none"><span id="r-tax-label">Pajak:</span><span id="r-tax">Rp0</span></div>
+                    <div class="flex justify-between font-extrabold text-sm mt-1"><span>TOTAL:</span><span id="r-total">Rp0</span></div>
+                </div>
+
+                <!-- Rincian pembayaran: bisa 1 baris (single method) atau beberapa
+                     baris sekaligus (split payment, mis. cash + QRIS). -->
+                <div class="border-t border-dashed border-ink-500 pt-2 mt-2 text-[11px] space-y-1" id="receipt-payment-section">
+                    <div id="receipt-payment-rows" class="space-y-1"></div>
+                    <div class="flex justify-between font-bold" id="receipt-change-row">
+                        <span>Kembali:</span><span id="r-change">Rp0</span>
+                    </div>
+                </div>
+                <div class="text-center mt-5 pt-3 border-t border-dashed border-ink-500">
+                    <div id="receipt-icon-area" class="mb-2"></div>
+                    <p id="receipt-footer" class="text-[10px] font-bold">Terima Kasih</p>
+                    <p id="receipt-catatan" class="text-[9px] text-ink-300 mt-1" style="display:none"></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mt-3 w-full">
+                <button onclick="closeReceipt()" class="py-4 bg-white/10 active:bg-white/20 text-white rounded-2xl font-bold backdrop-blur-md transition border border-white/20">Tutup &amp; Transaksi Baru</button>
+                <button onclick="printReceiptViaBluetooth()" class="py-4 bg-emerald-500 active:bg-emerald-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/30 flex justify-center items-center gap-2 transition">
+                    <i class="fab fa-bluetooth-b"></i> <span id="btn-bt-print-label">Cetak</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3c. BUKA SHIFT MODAL (blocking — tidak ada tombol tutup, wajib diisi role kasir) -->
+    <div id="modal-buka-shift" class="fixed inset-0 bg-ink-950/90 z-[90] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-sm shadow-2xl animate-slide-up">
+            <div class="p-6 text-center border-b border-ink-800">
+                <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                    <i class="fas fa-cash-register"></i>
+                </div>
+                <h3 class="font-bold text-lg text-ink-50">Buka Shift Kasir</h3>
+                <p class="text-xs text-ink-400 mt-1">Hitung & masukkan modal kas awal sebelum mulai jualan.</p>
+            </div>
+            <div class="p-6">
+                <label class="text-xs font-bold text-ink-300 mb-2 block">Modal Awal (Rp)</label>
+                <input id="input-modal-awal" type="text" inputmode="numeric" placeholder="0" autocomplete="off"
+                       class="w-full border border-ink-700 rounded-xl px-4 py-4 text-2xl font-extrabold text-ink-50 font-mono text-center mb-2"
+                       oninput="this.value = this.value.replace(/[^0-9]/g,'')">
+                <p id="buka-shift-error" class="text-red-500 text-xs font-bold text-center mb-3 hidden"></p>
+                <button onclick="submitBukaShift()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 active:scale-[0.98] transition">
+                    Mulai Shift
+                </button>
+                <!-- Modal ini sengaja tidak punya tombol tutup/backdrop-dismiss (kasir
+                     WAJIB buka shift sebelum lihat produk apapun) -- tapi itu berarti
+                     kalau kasir tidak sengaja login pakai akun yang salah, dia terjebak
+                     total (tombol akun di header ketutup modal z-90 ini, z-20). Link ini
+                     jadi satu-satunya jalan keluar yang aman. -->
+                <button onclick="doLogout()" class="w-full text-center text-xs font-bold text-ink-400 py-3 mt-1 active:text-ink-200 transition">
+                    Bukan akun Anda? <span class="underline">Keluar dari sesi ini</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3d. TUTUP SHIFT MODAL -->
+    <div id="modal-tutup-shift" class="fixed inset-0 bg-ink-950/70 z-[80] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-sm shadow-2xl animate-slide-up flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-ink-800 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-lg text-ink-50">Tutup Shift</h3>
+                <button onclick="closeTutupShiftModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="p-5 space-y-4 overflow-y-auto hide-scroll">
+                <div class="bg-ink-950 rounded-xl p-4 text-xs space-y-2">
+                    <div class="flex justify-between"><span class="text-ink-300">Modal Awal</span><span id="ts-modal-awal" class="font-bold">Rp 0</span></div>
+                    <div class="flex justify-between"><span class="text-ink-300">Perkiraan Kas Sistem</span><span id="ts-kas-sistem" class="font-bold text-blue-600">Rp 0</span></div>
+                    <p class="text-[10px] text-ink-400 pt-1 border-t border-ink-700">Modal awal + total pembayaran tunai selama shift ini. Hitung uang fisik di laci, lalu masukkan di bawah.</p>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-ink-300 mb-2 block">Kas Fisik di Laci (Rp)</label>
+                    <input id="input-kas-fisik" type="text" inputmode="numeric" placeholder="0" autocomplete="off"
+                           oninput="this.value = this.value.replace(/[^0-9]/g,''); updateSelisihPreview();"
+                           class="w-full border border-ink-700 rounded-xl px-4 py-4 text-xl font-extrabold text-ink-50 font-mono text-center">
+                </div>
+
+                <div id="selisih-preview" class="rounded-xl p-3 text-center font-bold text-sm hidden"></div>
+
+                <div>
+                    <label class="text-xs font-bold text-ink-300 mb-2 block">Catatan (opsional)</label>
+                    <input id="input-catatan-shift" type="text" placeholder="mis. selisih karena kembalian kurang tepat"
+                           class="w-full border border-ink-700 rounded-xl px-4 py-3 text-sm text-ink-100">
+                </div>
+            </div>
+
+            <div class="p-5 border-t border-ink-800 shrink-0">
+                <button onclick="submitTutupShift()" class="w-full bg-red-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-red-200 active:scale-[0.98] transition">
+                    Tutup Shift Sekarang
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3e. RINGKASAN TUTUP SHIFT (hasil akhir) -->
+    <div id="modal-shift-selesai" class="fixed inset-0 bg-ink-950/90 z-[95] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-sm shadow-2xl animate-slide-up p-6 text-center">
+            <div id="shift-selesai-icon" class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl"></div>
+            <h3 class="font-bold text-lg text-ink-50 mb-1">Shift Ditutup</h3>
+            <p id="shift-selesai-detail" class="text-sm text-ink-300 mb-5"></p>
+            <button onclick="window.location.href='login.html'" class="w-full bg-ink-950 text-white font-bold py-4 rounded-2xl active:scale-[0.98] transition">
+                Kembali ke Login
+            </button>
+        </div>
+    </div>
+
+    <!-- 3g. QTY MANUAL MODAL -->
+    <div id="modal-qty" class="fixed inset-0 bg-ink-950/60 z-[75] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-xs shadow-2xl animate-slide-up p-6">
+            <h3 class="font-bold text-lg text-ink-50 mb-1 truncate" id="qty-modal-nama">Jumlah</h3>
+            <p class="text-xs text-ink-400 mb-4">Stok tersedia: <span id="qty-modal-stok">0</span></p>
+            <input id="input-qty-manual" type="text" inputmode="numeric" placeholder="0" autocomplete="off"
+                   class="w-full border border-ink-700 rounded-xl px-4 py-4 text-2xl font-extrabold text-ink-50 font-mono text-center mb-4"
+                   oninput="this.value = this.value.replace(/[^0-9]/g,'')">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="closeQtyModal()" class="py-3.5 rounded-2xl border border-ink-700 text-ink-300 font-bold active:bg-ink-950 transition">Batal</button>
+                <button onclick="applyQtyManual()" class="py-3.5 rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-200 active:scale-[0.98] transition">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3f. DISKON MODAL -->
+    <div id="modal-diskon" class="fixed inset-0 bg-ink-950/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-xs shadow-2xl animate-slide-up p-6">
+            <h3 class="font-bold text-lg text-ink-50 mb-1">Diskon Transaksi</h3>
+            <p class="text-xs text-ink-400 mb-4">Maks. sebesar subtotal (<span id="diskon-max-info">Rp 0</span>)</p>
+            <input id="input-diskon" type="text" inputmode="numeric" placeholder="0" autocomplete="off"
+                   class="w-full border border-ink-700 rounded-xl px-4 py-4 text-2xl font-extrabold text-ink-50 font-mono text-center mb-4"
+                   oninput="this.value = this.value.replace(/[^0-9]/g,'')">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="closeDiskonModal()" class="py-3.5 rounded-2xl border border-ink-700 text-ink-300 font-bold active:bg-ink-950 transition">Batal</button>
+                <button onclick="applyDiskon()" class="py-3.5 rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-200 active:scale-[0.98] transition">Terapkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3f2. DISKON PER-ITEM MODAL -->
+    <div id="modal-diskon-item" class="fixed inset-0 bg-ink-950/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-xs shadow-2xl animate-slide-up p-6">
+            <h3 class="font-bold text-lg text-ink-50 mb-1 truncate" id="diskon-item-modal-nama">Diskon Item</h3>
+            <p class="text-xs text-ink-400 mb-4">Maks. sebesar harga baris ini (<span id="diskon-item-max-info">Rp 0</span>)</p>
+            <input id="input-diskon-item" type="text" inputmode="numeric" placeholder="0" autocomplete="off"
+                   class="w-full border border-ink-700 rounded-xl px-4 py-4 text-2xl font-extrabold text-ink-50 font-mono text-center mb-4"
+                   oninput="this.value = this.value.replace(/[^0-9]/g,'')">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="closeDiskonItemModal()" class="py-3.5 rounded-2xl border border-ink-700 text-ink-300 font-bold active:bg-ink-950 transition">Batal</button>
+                <button onclick="applyDiskonItem()" class="py-3.5 rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-200 active:scale-[0.98] transition">Terapkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3g. PAJAK MODAL -->
+    <div id="modal-pajak" class="fixed inset-0 bg-ink-950/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-xs shadow-2xl animate-slide-up p-6">
+            <h3 class="font-bold text-lg text-ink-50 mb-1">Pajak Transaksi</h3>
+            <p class="text-xs text-ink-400 mb-4">Persentase dari total setelah diskon (DPP). Kosongkan jika tidak kena pajak.</p>
+            <div class="relative mb-4">
+                <input id="input-pajak" type="text" inputmode="decimal" placeholder="0" autocomplete="off"
+                       class="w-full border border-ink-700 rounded-xl px-4 py-4 pr-10 text-2xl font-extrabold text-ink-50 font-mono text-center"
+                       oninput="this.value = this.value.replace(/[^0-9.]/g,'')">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-ink-400 font-bold text-lg">%</span>
+            </div>
+            <div class="flex gap-2 mb-4">
+                <button onclick="setPajakQuick(0)" class="flex-1 py-2 rounded-xl border border-ink-700 text-ink-300 font-bold text-xs active:bg-ink-950 transition">0%</button>
+                <button onclick="setPajakQuick(10)" class="flex-1 py-2 rounded-xl border border-ink-700 text-ink-300 font-bold text-xs active:bg-ink-950 transition">10%</button>
+                <button onclick="setPajakQuick(11)" class="flex-1 py-2 rounded-xl border border-ink-700 text-ink-300 font-bold text-xs active:bg-ink-950 transition">11%</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="closePajakModal()" class="py-3.5 rounded-2xl border border-ink-700 text-ink-300 font-bold active:bg-ink-950 transition">Batal</button>
+                <button onclick="applyPajak()" class="py-3.5 rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-200 active:scale-[0.98] transition">Terapkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3b. SPLIT PAYMENT MODAL -->
+    <div id="modal-split" class="fixed inset-0 bg-ink-950/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-sm shadow-2xl animate-slide-up flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-ink-800 flex justify-between items-center shrink-0">
+                <div>
+                    <h3 class="font-bold text-lg text-ink-50">Split Pembayaran</h3>
+                    <p class="text-[11px] text-ink-400 font-medium">Total tagihan: <span id="split-tagihan" class="font-bold text-blue-600">Rp 0</span></p>
+                </div>
+                <button onclick="closeSplitModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div id="split-rows" class="p-5 space-y-3 overflow-y-auto hide-scroll flex-1"></div>
+
+            <div class="p-5 border-t border-ink-800 shrink-0 space-y-3">
+                <button onclick="addSplitRow()" class="w-full py-2.5 rounded-xl border-2 border-dashed border-ink-600 text-ink-300 font-bold text-xs active:bg-ink-950 transition">
+                    <i class="fas fa-plus mr-1"></i> Tambah Metode Bayar
+                </button>
+
+                <div class="bg-ink-950 rounded-xl p-3 text-xs font-bold space-y-1">
+                    <div class="flex justify-between text-ink-300"><span>Total Dibayar</span><span id="split-total-dibayar">Rp 0</span></div>
+                    <div class="flex justify-between" id="split-sisa-row"><span id="split-sisa-label" class="text-ink-300">Sisa Tagihan</span><span id="split-sisa" class="text-red-500">Rp 0</span></div>
+                </div>
+
+                <button onclick="confirmSplitPayment()" id="btn-confirm-split" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 active:scale-[0.98] transition disabled:opacity-50" disabled>
+                    Konfirmasi Pembayaran
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. HOLD LIST MODAL -->
+    <div id="modal-hold" class="fixed inset-0 bg-ink-950/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-sm p-5 shadow-2xl animate-slide-up">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-ink-50">Pesanan Ditahan</h3>
+                <button onclick="toggleHoldList()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="hold-list" class="space-y-3 max-h-[50vh] overflow-y-auto hide-scroll"></div>
+        </div>
+    </div>
+
+    <!-- MODAL: MENU AKUN -->
+    <div id="modal-account" class="fixed inset-0 bg-ink-950/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-sm p-5 shadow-2xl animate-slide-up">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-ink-50" id="account-nama">Menu Akun</h3>
+                <button onclick="toggleAccountMenu()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="space-y-2">
+                <button onclick="toggleAccountMenu(); openReturSearchModal();" class="w-full flex items-center gap-3 p-3 rounded-2xl bg-ink-950 hover:bg-ink-800 active:scale-95 transition text-left font-bold text-sm text-ink-100">
+                    <i class="fas fa-rotate-left text-amber-600"></i> Retur Transaksi
+                </button>
+                <button onclick="toggleAccountMenu(); openChangePasswordModal();" class="w-full flex items-center gap-3 p-3 rounded-2xl bg-ink-950 hover:bg-ink-800 active:scale-95 transition text-left font-bold text-sm text-ink-100">
+                    <i class="fas fa-key text-blue-600"></i> Ganti Password
+                </button>
+                <a href="admin.html" id="btn-ke-admin" class="hidden w-full items-center gap-3 p-3 rounded-2xl bg-ink-950 hover:bg-ink-800 active:scale-95 transition text-left font-bold text-sm text-ink-100">
+                    <i class="fas fa-gauge text-indigo-600"></i> Dashboard Admin
+                </a>
+                <button onclick="toggleAccountMenu(); doLogout();" class="w-full flex items-center gap-3 p-3 rounded-2xl bg-red-50 hover:bg-red-100 active:scale-95 transition text-left font-bold text-sm text-red-600">
+                    <i class="fas fa-sign-out-alt"></i> Keluar / Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RETUR - CARI TRANSAKSI -->
+    <div id="modal-retur-search" class="fixed inset-0 bg-ink-950/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-sm shadow-2xl max-h-[85vh] flex flex-col">
+            <div class="p-5 border-b border-ink-800 flex items-center justify-between shrink-0">
+                <h3 class="font-bold text-lg text-ink-50">Retur Transaksi</h3>
+                <button onclick="closeReturSearchModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-4 shrink-0">
+                <input id="retur-search-input" type="text" placeholder="Cari kode transaksi..." autocomplete="off"
+                       class="w-full border border-ink-700 rounded-xl px-4 py-3 text-sm font-bold" oninput="renderReturSearchList()">
+                <p class="text-[10px] text-ink-400 mt-1.5">Cuma transaksi Anda sendiri yang bisa diretur.</p>
+            </div>
+            <div id="retur-search-list" class="px-4 pb-4 space-y-2 overflow-y-auto hide-scroll flex-1"></div>
+        </div>
+    </div>
+
+    <!-- MODAL: RETUR - DETAIL & PILIH ITEM -->
+    <div id="modal-retur-detail" class="fixed inset-0 bg-ink-950/60 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-sm shadow-2xl max-h-[85vh] flex flex-col">
+            <div class="p-5 border-b border-ink-800 flex items-center justify-between shrink-0">
+                <div class="min-w-0">
+                    <h3 class="font-bold text-lg text-ink-50 truncate" id="retur-detail-kode">-</h3>
+                    <p class="text-xs text-ink-400" id="retur-detail-meta">-</p>
+                </div>
+                <button onclick="closeReturDetailModal()" class="shrink-0 w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto hide-scroll flex-1">
+                <p class="text-[10px] font-bold text-ink-400 uppercase mb-2">Item — centang untuk diretur</p>
+                <div id="retur-detail-items" class="space-y-1"></div>
+                <div id="retur-detail-retur-history" class="hidden mt-3">
+                    <p class="text-[10px] font-bold text-ink-400 uppercase mb-2">Riwayat Retur</p>
+                    <div id="retur-riwayat-list" class="space-y-1.5 bg-ink-950 rounded-xl p-3"></div>
+                </div>
+                <div class="mt-3">
+                    <label class="block text-xs font-bold text-ink-300 mb-1">Uang dikembalikan lewat <span class="text-red-500">*</span></label>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <label class="flex items-center gap-2 border border-ink-700 rounded-xl px-3 py-2.5 text-sm font-bold cursor-pointer has-[:checked]:border-amber-400 has-[:checked]:bg-amber-50">
+                            <input type="radio" name="retur-metode" value="cash" checked class="accent-amber-500"> Tunai
+                        </label>
+                        <label class="flex items-center gap-2 border border-ink-700 rounded-xl px-3 py-2.5 text-sm font-bold cursor-pointer has-[:checked]:border-amber-400 has-[:checked]:bg-amber-50">
+                            <input type="radio" name="retur-metode" value="non_cash" class="accent-amber-500"> Non-tunai
+                        </label>
+                    </div>
+                    <p class="text-[10px] text-ink-400 mb-3">Tunai = uang fisik keluar dari laci. Non-tunai = transfer balik/kredit, tidak mengurangi kas fisik.</p>
+                    <label class="block text-xs font-bold text-ink-300 mb-1">Alasan Retur (opsional)</label>
+                    <input type="text" id="retur-alasan" placeholder="mis. barang rusak, salah kirim" class="w-full border border-ink-700 rounded-xl px-3 py-2.5 text-sm">
+                </div>
+            </div>
+            <div class="p-4 pt-0 shrink-0">
+                <button id="btn-retur-lanjut" onclick="openReturApproveModal()" disabled class="w-full py-3.5 rounded-2xl bg-amber-500 text-white font-bold shadow-lg shadow-amber-200 active:scale-[0.98] transition disabled:opacity-40 disabled:pointer-events-none">
+                    <i class="fas fa-rotate-left mr-1.5"></i>Ajukan Retur
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RETUR - APPROVAL ADMIN (wajib untuk role kasir) -->
+    <div id="modal-retur-approve" class="fixed inset-0 bg-ink-950/90 z-[95] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-xs shadow-2xl p-6">
+            <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h3 class="font-bold text-lg text-ink-50 text-center">Konfirmasi Password Anda</h3>
+            <p class="text-xs text-ink-300 text-center mt-1 mb-4">Masukkan password Anda sendiri untuk memastikan retur ini benar-benar Anda yang proses.</p>
+            <input id="retur-approve-password" type="password" placeholder="Password Anda" autocomplete="off"
+                   class="w-full border border-ink-700 rounded-xl px-4 py-3 text-sm font-bold mb-1">
+            <p id="retur-approve-error" class="text-red-500 text-xs font-bold text-center mb-3 hidden"></p>
+            <div class="grid grid-cols-2 gap-3 mt-3">
+                <button onclick="closeReturApproveModal()" class="py-3.5 rounded-2xl border border-ink-700 text-ink-300 font-bold active:bg-ink-950 transition">Batal</button>
+                <button id="btn-retur-approve-submit" onclick="submitReturDenganApproval()" class="py-3.5 rounded-2xl bg-amber-500 text-white font-bold shadow-lg shadow-amber-200 active:scale-[0.98] transition">Konfirmasi &amp; Proses</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: KONFIRMASI (pengganti native confirm() browser yang tampilannya "murahan"/tidak konsisten dgn tema app) -->
+    <div id="modal-confirm" class="fixed inset-0 bg-ink-950/70 z-[97] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-sm p-6 shadow-2xl animate-slide-up text-center">
+            <div id="confirm-icon-wrap" class="w-14 h-14 mx-auto rounded-full bg-red-50 flex items-center justify-center mb-4">
+                <i id="confirm-icon" class="fas fa-triangle-exclamation text-xl text-red-500"></i>
+            </div>
+            <h3 id="confirm-title" class="font-extrabold text-lg text-ink-50 mb-1">Konfirmasi</h3>
+            <p id="confirm-message" class="text-sm text-ink-300 font-medium mb-6">Apakah Anda yakin?</p>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="confirm-btn-cancel" onclick="resolveConfirm(false)" class="py-3.5 rounded-2xl border border-ink-700 text-ink-300 font-bold active:bg-ink-950 transition">Batal</button>
+                <button id="confirm-btn-ok" onclick="resolveConfirm(true)" class="py-3.5 rounded-2xl bg-red-500 text-white font-bold shadow-lg shadow-red-200 active:scale-[0.98] transition">Oke</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: GANTI PASSWORD -->
+    <div id="modal-password" class="fixed inset-0 bg-ink-950/60 z-[80] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-ink-900 rounded-3xl w-full max-w-sm p-5 shadow-2xl animate-slide-up">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-ink-50">Ganti Password</h3>
+                <button onclick="closeChangePasswordModal()" class="w-8 h-8 bg-ink-800 rounded-full active:bg-ink-700 flex items-center justify-center text-ink-200 transition"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="form-password" class="space-y-3" onsubmit="submitChangePassword(event)">
+                <div>
+                    <label class="block text-xs font-bold text-ink-300 mb-1">Password Lama</label>
+                    <input type="password" id="password-lama" required class="w-full border border-ink-700 rounded-xl px-3 py-2.5 text-sm font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-ink-300 mb-1">Password Baru</label>
+                    <input type="password" id="password-baru" required minlength="6" class="w-full border border-ink-700 rounded-xl px-3 py-2.5 text-sm font-bold">
+                    <p class="text-[10px] text-ink-400 mt-1 font-medium">Minimal 6 karakter.</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-ink-300 mb-1">Konfirmasi Password Baru</label>
+                    <input type="password" id="password-konfirmasi" required minlength="6" class="w-full border border-ink-700 rounded-xl px-3 py-2.5 text-sm font-bold">
+                </div>
+                <p id="password-error" class="text-xs font-bold text-red-500 hidden"></p>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl active:scale-95 transition shadow-lg shadow-blue-500/30">Simpan Password Baru</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4b. SCAN BARCODE MODAL (kamera HP) -->
+    <div id="modal-scan" class="fixed inset-0 bg-ink-950 z-[70] hidden items-center justify-center p-0">
+        <div class="relative w-full h-full flex flex-col">
+            <div class="flex items-center justify-between px-4 pt-[calc(1rem+var(--safe-top))] pb-3 bg-gradient-to-b from-black/70 to-transparent absolute top-0 left-0 right-0 z-10">
+                <h3 class="text-white font-bold text-sm"><i class="fas fa-barcode mr-1.5"></i>Scan Barcode</h3>
+                <button onclick="closeScanModal()" class="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center text-white active:bg-white/25 transition"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="flex-1 relative overflow-hidden bg-black flex items-center justify-center">
+                <video id="scan-video" class="w-full h-full object-cover" playsinline muted></video>
+                <!-- Bingkai target pemindaian -->
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div class="w-[78%] max-w-xs aspect-[3/2] border-2 border-white/80 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] relative">
+                        <div class="absolute -top-0.5 -left-0.5 w-6 h-6 border-t-4 border-l-4 border-blue-400 rounded-tl-2xl"></div>
+                        <div class="absolute -top-0.5 -right-0.5 w-6 h-6 border-t-4 border-r-4 border-blue-400 rounded-tr-2xl"></div>
+                        <div class="absolute -bottom-0.5 -left-0.5 w-6 h-6 border-b-4 border-l-4 border-blue-400 rounded-bl-2xl"></div>
+                        <div class="absolute -bottom-0.5 -right-0.5 w-6 h-6 border-b-4 border-r-4 border-blue-400 rounded-br-2xl"></div>
+                    </div>
+                </div>
+                <div id="scan-status" class="absolute bottom-6 left-4 right-4 text-center text-white/80 text-xs font-bold bg-black/40 rounded-xl py-2 backdrop-blur-sm">
+                    Arahkan kamera ke barcode produk
+                </div>
+            </div>
+
+            <div class="p-4 pb-[calc(1rem+var(--safe-bottom))] bg-black/90">
+                <button onclick="closeScanModal()" class="w-full py-3 bg-white/10 text-white rounded-xl font-bold text-sm active:bg-white/20 transition">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. OFFLINE SYNC INDICATOR -->
+    <div id="sync-indicator" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-ink-950 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold transition-all duration-300 -translate-y-10 opacity-0 z-10 pointer-events-none">
+        <i class="fas fa-sync fa-spin text-blue-400" id="sync-icon"></i>
+        <span id="sync-text">Memeriksa data...</span>
+    </div>
+
+    <!-- 6. TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-20 left-4 right-4 bg-ink-950 text-white px-4 py-3 rounded-2xl shadow-2xl text-sm font-bold flex items-center gap-3 transform -translate-y-32 transition-transform duration-300 z-[80] pointer-events-none">
+        <div id="toast-icon-wrap" class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center shrink-0"><i id="toast-icon" class="fas fa-check text-white"></i></div>
+        <span id="toast-msg" class="line-clamp-1">Item ditambahkan</span>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. DATA & STATE MANAGEMENT
+        // ==========================================
+        // kasire hidup di path /kasir pada domain yang sama dengan etalase
+        // (lihat routes di wrangler.toml) -- SEMUA panggilan API di file ini
+        // WAJIB lewat API_BASE, jangan hardcode '/api/...' langsung, nanti
+        // request nyasar ke Worker etalase (yang pegang domain root) alih-alih
+        // ke kasire. Lihat ARSITEKTUR.md di root repo untuk detailnya.
+        const API_BASE = '/kasir';
+
+        // Escape nilai apa pun yang berasal dari data (nama produk, kategori,
+        // dst) SEBELUM disisipkan ke innerHTML lewat template string. Tanpa
+        // ini, nama produk seperti "Teh Po'o" atau yang sengaja diisi tag
+        // HTML akan dieksekusi sebagai markup/JS sungguhan — stored XSS.
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        let products = []; // diisi via loadProducts() dari GET /api/produk
+        let currentUser = null; // diisi via checkAuth() dari GET /api/auth/me
+        let currentToko = null; // diisi via loadTokoInfo() dari GET /api/toko (toko milik user yang login)
+        let activeShift = null; // diisi via checkShiftStatus() dari GET /api/shift/aktif
+
+        // Cache status shift TERVERIFIKASI terakhir (hasil sukses dari server),
+        // dipakai sebagai fallback saat checkShiftStatus() gagal karena koneksi
+        // putus — supaya kasir yang sudah punya shift aktif TIDAK terkunci di
+        // tengah jualan hanya karena satu request refresh badge gagal. Lihat
+        // checkShiftStatus() untuk detail kapan ini dipakai/di-update.
+        // Di-scope per-user (bukan key global) supaya kasir lain yang login di
+        // perangkat yang sama (mis. shift bergantian) tidak salah mewarisi
+        // status shift kasir sebelumnya saat device sedang offline.
+        function shiftCacheKey() {
+            return `kasir_shift_cache_v1_${currentUser?.id ?? 'anon'}`;
+        }
+        function cacheShiftState(shift) {
+            try { localStorage.setItem(shiftCacheKey(), JSON.stringify({ shift, cachedAt: Date.now() })); } catch {}
+        }
+        function readCachedShiftState() {
+            try {
+                const raw = localStorage.getItem(shiftCacheKey());
+                return raw ? JSON.parse(raw).shift : null;
+            } catch { return null; }
+        }
+        function clearCachedShiftState() {
+            try { localStorage.removeItem(shiftCacheKey()); } catch {}
+        }
+
+        // FIX (offline): dipakai sebagai fallback saat checkAuth() gagal karena
+        // koneksi putus (bukan karena sesi sungguhan tidak valid) — supaya kasir
+        // yang device-nya benar-benar offline saat app di-reload tidak langsung
+        // terlempar ke login.html (yang juga butuh internet), padahal seluruh
+        // tujuan antrian offline (IndexedDB) adalah supaya jualan tetap jalan
+        // tanpa koneksi. Key tunggal (bukan per-user) karena identitas user
+        // BELUM diketahui sebelum checkAuth() sukses sekali.
+        function cacheAuthState(user) {
+            try { localStorage.setItem('kasir_auth_cache_v1', JSON.stringify({ user, cachedAt: Date.now() })); } catch {}
+        }
+        function readCachedAuthState() {
+            try {
+                const raw = localStorage.getItem('kasir_auth_cache_v1');
+                return raw ? JSON.parse(raw).user : null;
+            } catch { return null; }
+        }
+        function clearCachedAuthState() {
+            try { localStorage.removeItem('kasir_auth_cache_v1'); } catch {}
+        }
+
+        let cart = [];
+        let heldCarts = [];
+        // Dulu ada toggle "simulasi offline" manual (tombol wifi di header).
+        // Sekarang status online/offline murni dari navigator.onLine + event
+        // 'online'/'offline' browser (lihat updateNetworkBadge() & listener di
+        // bagian UTILS & EVENT LISTENERS) -- tidak ada lagi mode simulasi.
+        // State retry sync offline (lihat syncOfflineData/checkOfflineQueue):
+        // syncInProgress mencegah pemanggilan tumpang tindih (mutex sederhana),
+        // nextSyncAllowedAt + syncBackoffMs mencegah retry bertubi-tubi tanpa
+        // jeda saat internet beneran mati lama (exponential backoff, mentok 5 menit).
+        let syncInProgress = false;
+        let nextSyncAllowedAt = 0;
+        let syncBackoffMs = 0;
+        let activePaymentMethod = 'cash';
+        let currentTotalPay = 0;
+        let uangDiterimaStr = "";
+        let currentCategory = 'Semua';
+        let audioCtx;
+        let cartDiskon = 0; // diskon transaksi (nominal Rp), diterapkan lewat modal-diskon
+
+        // Pajak (%) — dulu dipaksa 11% di setiap transaksi. Sekarang bisa diedit
+        // lewat modal-pajak, default KOSONG (0%) kalau belum pernah diatur.
+        // Disimpan di localStorage (per perangkat/browser) supaya kasir tidak
+        // perlu isi ulang tiap transaksi, tapi tetap bebas diubah kapan saja.
+        let cartPajakPersen = parseFloat(localStorage.getItem('kasir_pajak_persen') || '0') || 0;
+
+        // Split payment (bayar >1 metode dalam satu transaksi)
+        let splitRows = [];
+        let splitRowSeq = 0;
+        const METODE_LABEL = { cash: 'Tunai', qris: 'QRIS', debit: 'Debit', transfer: 'Transfer' };
+
+        const formatRp = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+
+        // ==========================================
+        // 1.5 API INTEGRATION (Auth & Produk)
+        // ==========================================
+
+        /**
+         * Pastikan user sudah login (cookie sesi valid). Redirect ke login.html
+         * HANYA kalau server secara eksplisit bilang sesi tidak valid (401 /
+         * success:false) — BUKAN kalau fetch-nya sendiri gagal karena device
+         * benar-benar offline. Sebelumnya kedua kasus ini diperlakukan sama
+         * (langsung redirect), yang berarti kasir yang offline saat app
+         * di-reload/relaunch akan terkunci total di login.html (yang juga
+         * butuh internet) — padahal tujuan antrian offline (IndexedDB) justru
+         * supaya jualan tetap bisa jalan tanpa koneksi. Pola ini sama seperti
+         * checkShiftStatus() di bawah.
+         */
+        async function checkAuth() {
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' });
+                if (res.status === 401) {
+                    clearCachedAuthState();
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    clearCachedAuthState();
+                    window.location.href = 'login.html';
+                    return false;
+                }
+
+                currentUser = data.user;
+                cacheAuthState(currentUser);
+                document.getElementById('receipt-kasir-nama').innerText = `Kasir: ${currentUser.nama_lengkap}`;
+                return true;
+            } catch {
+                // fetch melempar error (bukan respons server) → kegagalan jaringan
+                // murni. Pakai identitas TERVERIFIKASI terakhir kalau ada.
+                const cached = readCachedAuthState();
+                if (cached) {
+                    currentUser = cached;
+                    document.getElementById('receipt-kasir-nama').innerText = `Kasir: ${currentUser.nama_lengkap}`;
+                    showToast('Offline — memakai sesi terakhir yang tersimpan di perangkat ini.', 'warning');
+                    return true;
+                }
+                window.location.href = 'login.html';
+                return false;
+            }
+        }
+
+        // Pengaturan kustomisasi struk (diisi dari /api/settings, dipakai saat buildReceipt()
+        // & cetak Bluetooth). Nilai default di sini dipakai kalau fetch gagal (mis. offline).
+        let strukSettings = {
+            struk_footer: 'Terima kasih atas kunjungan Anda',
+            struk_catatan: '',
+            struk_lebar_kertas: '58',
+            struk_tampilkan_alamat: '1',
+            struk_footer_ikon: 'tidak',
+            struk_qr_data: '',
+        };
+
+        /** Ambil judul aplikasi & kustomisasi struk (bisa diubah via panel admin) & terapkan ke header + tab browser + struk. */
+        async function loadAppTitle() {
+            try {
+                const res = await fetch(`${API_BASE}/api/settings`, { credentials: 'include' });
+                const data = await res.json();
+                const title = (data.success && data.data?.app_title) ? data.data.app_title : 'KASIR CLOUD';
+                document.title = title;
+                const headerEl = document.getElementById('app-title-header');
+                if (headerEl) headerEl.innerText = title;
+
+                if (data.success) {
+                    strukSettings = {
+                        struk_footer: data.data.struk_footer || strukSettings.struk_footer,
+                        struk_catatan: data.data.struk_catatan ?? strukSettings.struk_catatan,
+                        struk_lebar_kertas: data.data.struk_lebar_kertas || strukSettings.struk_lebar_kertas,
+                        struk_tampilkan_alamat: data.data.struk_tampilkan_alamat ?? strukSettings.struk_tampilkan_alamat,
+                        struk_footer_ikon: data.data.struk_footer_ikon || strukSettings.struk_footer_ikon,
+                        struk_qr_data: data.data.struk_qr_data ?? strukSettings.struk_qr_data,
+                    };
+                    const printArea = document.getElementById('print-area');
+                    if (printArea) printArea.classList.toggle('paper-80', strukSettings.struk_lebar_kertas === '80');
+                    const alamatEl = document.getElementById('receipt-toko-alamat');
+                    if (alamatEl) alamatEl.style.display = strukSettings.struk_tampilkan_alamat === '1' ? '' : 'none';
+                }
+            } catch {
+                // Gagal ambil pengaturan (mis. offline) — biarkan judul & struk pakai default.
+            }
+        }
+
+        /** Ambil data toko milik user yang login, dipakai untuk nama & alamat di kop struk. */
+        async function loadTokoInfo() {
+            try {
+                const res = await fetch(`${API_BASE}/api/toko`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+                    currentToko = data.data.find(t => t.id === currentUser?.toko_id) || data.data[0];
+                    const namaEl = document.getElementById('receipt-toko-nama');
+                    const alamatEl = document.getElementById('receipt-toko-alamat');
+                    if (namaEl) namaEl.innerText = currentToko.nama;
+                    if (alamatEl) alamatEl.innerText = currentToko.alamat || '';
+                }
+            } catch {
+                // Gagal ambil data toko — struk tetap tampilkan nilai default di HTML.
+            }
+        }
+
+
+
+        /**
+         * Cek status shift ke server. Untuk role 'kasir', kalau TERKONFIRMASI
+         * belum ada shift aktif (server sukses menjawab), tampilkan modal
+         * blocking (wajib diisi sebelum bisa jualan) — ini murni UX; validasi
+         * sebenarnya tetap dipaksa di server saat POST /api/transaksi (jangan
+         * pernah percaya validasi client saja).
+         *
+         * PENTING: kalau fetch GAGAL (jaringan putus, bukan respons server yang
+         * bilang "tidak ada shift"), JANGAN anggap sama dengan "tidak ada shift"
+         * — itu akan mengunci kasir yang sebenarnya sudah punya shift aktif
+         * hanya karena satu request refresh gagal (mis. tepat setelah koneksi
+         * putus di tengah jualan). Sebagai gantinya, pakai status TERVERIFIKASI
+         * terakhir dari cache lokal. Modal blocking hanya muncul kalau memang
+         * belum pernah ada shift terkonfirmasi SAMA SEKALI (mis. buka app
+         * pertama kali dalam kondisi offline) — itu tetap butuh koneksi karena
+         * shift baru tidak bisa dibuka/diverifikasi tanpa server.
+         */
+        async function checkShiftStatus() {
+            let networkOk = true;
+            try {
+                const res = await fetch(`${API_BASE}/api/shift/aktif`, { credentials: 'include' });
+                const data = await res.json();
+                activeShift = data.success ? data.data : null;
+                cacheShiftState(activeShift); // simpan hasil TERVERIFIKASI dari server
+            } catch {
+                networkOk = false;
+                activeShift = readCachedShiftState(); // fallback ke status terverifikasi terakhir yang kita tahu
+            }
+
+            const btnShift = document.getElementById('btn-shift');
+            const modalBuka = document.getElementById('modal-buka-shift');
+            const errEl = document.getElementById('buka-shift-error');
+
+            if (activeShift) {
+                btnShift.classList.remove('hidden');
+                document.getElementById('shift-badge-text').innerText =
+                    (networkOk ? '' : '(offline) ') + formatRp(activeShift.perkiraan_kas_saat_ini ?? activeShift.modal_awal);
+                modalBuka.classList.add('hidden'); modalBuka.classList.remove('flex');
+            } else if (currentUser?.role === 'kasir') {
+                // Kasir wajib buka shift dulu — modal ini tidak punya tombol tutup.
+                btnShift.classList.add('hidden');
+                modalBuka.classList.remove('hidden'); modalBuka.classList.add('flex');
+                if (!networkOk) {
+                    errEl.innerText = 'Tidak ada koneksi internet — sambungkan dulu untuk memverifikasi atau membuka shift.';
+                    errEl.classList.remove('hidden');
+                } else {
+                    errEl.classList.add('hidden');
+                }
+            } else {
+                // admin_toko/super_admin tidak dipaksa disiplin shift formal.
+                btnShift.classList.add('hidden');
+            }
+        }
+
+        async function submitBukaShift() {
+            const raw = document.getElementById('input-modal-awal').value;
+            const modalAwal = parseInt(raw || '0');
+            const errEl = document.getElementById('buka-shift-error');
+            errEl.classList.add('hidden');
+
+            try {
+                const res = await fetch(`${API_BASE}/api/shift/buka`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ modal_awal: modalAwal })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Gagal membuka shift');
+
+                document.getElementById('input-modal-awal').value = '';
+                await checkShiftStatus();
+                showToast(`Shift dibuka dengan modal ${formatRp(modalAwal)}`);
+            } catch (err) {
+                // Shift TIDAK BISA dibuka offline (perlu server untuk memastikan
+                // tidak ada shift ganda) — bedakan pesannya dari error validasi biasa
+                // supaya kasir tahu ini soal koneksi, bukan input yang salah.
+                errEl.innerText = (err instanceof TypeError)
+                    ? 'Tidak ada koneksi internet — sambungkan dulu untuk membuka shift.'
+                    : err.message;
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        async function openTutupShiftModal() {
+            // Refresh dulu supaya "perkiraan kas sistem" akurat sampai detik ini
+            await checkShiftStatus();
+            if (!activeShift) return;
+
+            document.getElementById('ts-modal-awal').innerText = formatRp(activeShift.modal_awal);
+            document.getElementById('ts-kas-sistem').innerText = formatRp(activeShift.perkiraan_kas_saat_ini);
+            document.getElementById('input-kas-fisik').value = '';
+            document.getElementById('input-catatan-shift').value = '';
+            document.getElementById('selisih-preview').classList.add('hidden');
+
+            const m = document.getElementById('modal-tutup-shift');
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+
+        function closeTutupShiftModal() {
+            const m = document.getElementById('modal-tutup-shift');
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        function updateSelisihPreview() {
+            if (!activeShift) return;
+            const kasFisik = parseInt(document.getElementById('input-kas-fisik').value || '0');
+            const selisih = kasFisik - activeShift.perkiraan_kas_saat_ini;
+            const box = document.getElementById('selisih-preview');
+            box.classList.remove('hidden');
+
+            if (selisih === 0) {
+                box.className = 'rounded-xl p-3 text-center font-bold text-sm bg-green-50 text-green-700';
+                box.innerText = 'Pas — tidak ada selisih ✓';
+            } else if (selisih < 0) {
+                box.className = 'rounded-xl p-3 text-center font-bold text-sm bg-red-50 text-red-600';
+                box.innerText = `Kurang ${formatRp(Math.abs(selisih))}`;
+            } else {
+                box.className = 'rounded-xl p-3 text-center font-bold text-sm bg-amber-50 text-amber-700';
+                box.innerText = `Lebih ${formatRp(selisih)}`;
+            }
+        }
+
+        async function submitTutupShift() {
+            const kasFisik = parseInt(document.getElementById('input-kas-fisik').value || '0');
+            const catatan = document.getElementById('input-catatan-shift').value.trim();
+
+            try {
+                const res = await fetch(`${API_BASE}/api/shift/tutup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ kas_fisik_akhir: kasFisik, catatan: catatan || null })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Gagal menutup shift');
+
+                closeTutupShiftModal();
+                showShiftSelesai(data.data);
+                activeShift = null;
+                clearCachedShiftState();
+                document.getElementById('btn-shift').classList.add('hidden');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function showShiftSelesai(shift) {
+            const icon = document.getElementById('shift-selesai-icon');
+            const detail = document.getElementById('shift-selesai-detail');
+            const selisih = shift.selisih ?? 0;
+
+            if (selisih === 0) {
+                icon.className = 'w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl bg-green-50 text-green-600';
+                icon.innerHTML = '<i class="fas fa-check-circle"></i>';
+            } else {
+                icon.className = 'w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl bg-amber-50 text-amber-600';
+                icon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            }
+
+            const label = selisih === 0 ? 'Kas pas, tidak ada selisih.' : selisih < 0
+                ? `Kas kurang ${formatRp(Math.abs(selisih))} dari sistem.`
+                : `Kas lebih ${formatRp(selisih)} dari sistem.`;
+            detail.innerText = `Kas sistem: ${formatRp(shift.kas_sistem_akhir)} • Kas fisik: ${formatRp(shift.kas_fisik_akhir)}. ${label}`;
+
+            const m = document.getElementById('modal-shift-selesai');
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+
+        /** Ambil daftar produk aktif dari backend & mapping ke bentuk yang dipakai UI. */
+        async function loadProducts() {
+            try {
+                const res = await fetch(`${API_BASE}/api/produk`, { credentials: 'include' });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Gagal memuat produk');
+
+                products = data.data.map(p => ({
+                    id: p.id,
+                    nama: p.nama,
+                    harga: p.harga_jual,
+                    stok: p.stok,
+                    img: p.gambar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.nama.slice(0,2))}&background=eff6ff&color=2563eb&size=200`,
+                    barcode: p.kode_produk,
+                    kategori: p.kategori_nama || 'Lainnya'
+                }));
+
+                renderCategoryFilters();
+                renderProducts();
+            } catch (err) {
+                showToast(err.message || 'Gagal memuat produk. Cek koneksi.', 'error');
+            }
+        }
+
+        /** Render tombol filter kategori secara dinamis berdasarkan kategori yang benar-benar ada di data produk. */
+        function renderCategoryFilters() {
+            const wrap = document.getElementById('category-filters');
+            const kategoriList = ['Semua', ...new Set(products.map(p => p.kategori))];
+            wrap.innerHTML = kategoriList.map((k, i) => `
+                <button class="cat-btn px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap active:scale-95 transition ${i === 0 ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-ink-900 text-ink-200 border border-ink-700'}" data-cat="${escapeHtml(k)}">${escapeHtml(k)}</button>
+            `).join('');
+            bindCategoryFilterEvents();
+        }
+
+        function bindCategoryFilterEvents() {
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.cat-btn').forEach(b => {
+                        b.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-200');
+                        b.classList.add('bg-ink-900', 'text-ink-200', 'border-ink-700');
+                    });
+                    const target = e.currentTarget;
+                    target.classList.remove('bg-ink-900', 'text-ink-200', 'border-ink-700');
+                    target.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-200');
+                    currentCategory = target.dataset.cat;
+                    renderProducts(document.getElementById('search-input').value);
+                });
+            });
+        }
+
+        // ==========================================
+        // KONFIRMASI KUSTOM (pengganti native confirm() browser)
+        // ==========================================
+        let _confirmResolver = null;
+
+        /**
+         * Tampilkan modal konfirmasi bergaya app (bukan popup bawaan browser).
+         * Return Promise<boolean> — resolve(true) kalau user tekan tombol Oke.
+         */
+        function showConfirm(message, opts = {}) {
+            const {
+                title = 'Konfirmasi',
+                okText = 'Oke',
+                cancelText = 'Batal',
+                icon = 'fa-triangle-exclamation',
+                tone = 'danger', // 'danger' (merah) atau 'primary' (biru)
+            } = opts;
+
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+            document.getElementById('confirm-btn-ok').innerText = okText;
+            document.getElementById('confirm-btn-cancel').innerText = cancelText;
+
+            const iconWrap = document.getElementById('confirm-icon-wrap');
+            const iconEl = document.getElementById('confirm-icon');
+            const okBtn = document.getElementById('confirm-btn-ok');
+            iconEl.className = `fas ${icon} text-xl ${tone === 'danger' ? 'text-red-500' : 'text-blue-500'}`;
+            iconWrap.className = `w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-4 ${tone === 'danger' ? 'bg-red-50' : 'bg-blue-50'}`;
+            okBtn.className = `py-3.5 rounded-2xl text-white font-bold shadow-lg active:scale-[0.98] transition ${tone === 'danger' ? 'bg-red-500 shadow-red-200' : 'bg-blue-600 shadow-blue-200'}`;
+
+            const m = document.getElementById('modal-confirm');
+            m.classList.remove('hidden'); m.classList.add('flex');
+
+            return new Promise((resolve) => { _confirmResolver = resolve; });
+        }
+
+        function resolveConfirm(result) {
+            const m = document.getElementById('modal-confirm');
+            m.classList.add('hidden'); m.classList.remove('flex');
+            if (_confirmResolver) { _confirmResolver(result); _confirmResolver = null; }
+        }
+
+        async function doLogout() {
+            const ok = await showConfirm('Anda akan keluar dari sesi kasir saat ini.', {
+                title: 'Keluar dari Kasir?',
+                okText: 'Ya, Keluar',
+                icon: 'fa-sign-out-alt',
+                tone: 'danger',
+            });
+            if (!ok) return;
+            try {
+                await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+            } finally {
+                sessionStorage.removeItem('kasir_user');
+                clearCachedAuthState();
+                window.location.href = 'login.html';
+            }
+        }
+
+        function toggleAccountMenu() {
+            const m = document.getElementById('modal-account');
+            if (m.classList.contains('hidden')) {
+                document.getElementById('account-nama').innerText = 'Menu Akun';
+                // Tombol ke Dashboard Admin cuma relevan buat admin_toko/super_admin
+                // yang lagi pakai layar kasir ini (mis. admin_toko yang sekaligus
+                // jadi kasir) -- kasir murni tidak akan lihat tombol ini sama sekali.
+                const btnAdmin = document.getElementById('btn-ke-admin');
+                const isAdmin = currentUser && (currentUser.role === 'admin_toko' || currentUser.role === 'super_admin');
+                btnAdmin.classList.toggle('hidden', !isAdmin);
+                btnAdmin.classList.toggle('flex', isAdmin);
+                m.classList.remove('hidden'); m.classList.add('flex');
+            } else {
+                m.classList.add('hidden'); m.classList.remove('flex');
+            }
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('form-password').reset();
+            document.getElementById('password-error').classList.add('hidden');
+            const m = document.getElementById('modal-password');
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+
+        function closeChangePasswordModal() {
+            const m = document.getElementById('modal-password');
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        async function submitChangePassword(e) {
+            e.preventDefault();
+            const errEl = document.getElementById('password-error');
+            errEl.classList.add('hidden');
+
+            const password_lama = document.getElementById('password-lama').value;
+            const password_baru = document.getElementById('password-baru').value;
+            const konfirmasi = document.getElementById('password-konfirmasi').value;
+
+            if (password_baru !== konfirmasi) {
+                errEl.innerText = 'Konfirmasi password baru tidak cocok.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ password_lama, password_baru }),
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    errEl.innerText = data.error || 'Gagal mengubah password.';
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+                closeChangePasswordModal();
+                showToast('Password berhasil diubah');
+            } catch (err) {
+                errEl.innerText = 'Gagal terhubung ke server.';
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        // ==========================================
+        // RETUR TRANSAKSI (kasir, dengan approval admin)
+        // ==========================================
+        let returTransaksiList = [];
+        let returDetailData = null;
+
+        async function openReturSearchModal() {
+            const listEl = document.getElementById('retur-search-list');
+            listEl.innerHTML = '<p class="text-center text-ink-400 text-xs font-bold py-6"><i class="fas fa-spinner fa-spin mr-1"></i>Memuat...</p>';
+            document.getElementById('retur-search-input').value = '';
+            const m = document.getElementById('modal-retur-search');
+            m.classList.remove('hidden'); m.classList.add('flex');
+            try {
+                // Backend otomatis batasi kasir cuma lihat transaksinya sendiri
+                // (lihat GET /api/transaksi) -- tidak perlu filter tambahan di sini.
+                const res = await fetch(`${API_BASE}/api/transaksi?limit=100`, { credentials: 'include' });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Gagal memuat transaksi');
+                returTransaksiList = data.data.filter(t => t.status === 'selesai');
+                renderReturSearchList();
+            } catch (e) {
+                listEl.innerHTML = `<p class="text-center text-red-400 text-xs font-bold py-6">${escapeHtml(e.message)}</p>`;
+            }
+        }
+
+        function closeReturSearchModal() {
+            const m = document.getElementById('modal-retur-search');
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        function renderReturSearchList() {
+            const q = document.getElementById('retur-search-input').value.trim().toLowerCase();
+            const listEl = document.getElementById('retur-search-list');
+            const filtered = q ? returTransaksiList.filter(t => t.kode_transaksi.toLowerCase().includes(q)) : returTransaksiList;
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = '<p class="text-center text-ink-400 text-xs font-bold py-6">Tidak ada transaksi ditemukan</p>';
+                return;
+            }
+            listEl.innerHTML = filtered.slice(0, 50).map(t => {
+                const waktu = new Date(t.created_at.replace(' ', 'T') + 'Z').toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+                return `
+                <button onclick="openReturDetail(${t.id})" class="w-full text-left flex items-center justify-between gap-2 p-3 rounded-xl border border-ink-800 active:bg-ink-950 transition">
+                    <div class="min-w-0">
+                        <p class="font-bold text-xs text-ink-100 truncate">${escapeHtml(t.kode_transaksi)}</p>
+                        <p class="text-[10px] text-ink-400">${waktu}</p>
+                    </div>
+                    <p class="text-xs font-bold text-ink-100 shrink-0">${formatRp(t.total_bayar)}</p>
+                </button>`;
+            }).join('');
+        }
+
+        async function openReturDetail(id) {
+            try {
+                const res = await fetch(`${API_BASE}/api/transaksi/${id}`, { credentials: 'include' });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Gagal memuat detail transaksi');
+                returDetailData = data.data;
+                renderReturDetail();
+                closeReturSearchModal();
+                const m = document.getElementById('modal-retur-detail');
+                m.classList.remove('hidden'); m.classList.add('flex');
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        function closeReturDetailModal() {
+            const m = document.getElementById('modal-retur-detail');
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        function renderReturDetail() {
+            const trx = returDetailData;
+            const waktu = new Date(trx.created_at.replace(' ', 'T') + 'Z').toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+            document.getElementById('retur-detail-kode').innerText = trx.kode_transaksi;
+            document.getElementById('retur-detail-meta').innerText = `${waktu} · ${formatRp(trx.total_bayar)}`;
+            document.getElementById('retur-alasan').value = '';
+            document.querySelector('input[name="retur-metode"][value="cash"]').checked = true;
+
+            document.getElementById('retur-detail-items').innerHTML = trx.items.map(item => {
+                const sisa = item.qty - item.qty_retur;
+                const bisaRetur = sisa > 0;
+                let ket = `${item.qty} x ${formatRp(item.harga_satuan)}`;
+                if (item.qty_retur > 0) ket += ` &middot; sudah diretur ${item.qty_retur}`;
+                return `
+                <div class="flex items-center gap-2.5 py-2 border-b border-ink-800 last:border-0">
+                    <input type="checkbox" ${bisaRetur ? '' : 'disabled'} data-detail-id="${item.id}" data-max="${sisa}"
+                           class="retur-check w-4 h-4 accent-amber-500 shrink-0" onchange="onReturCheckChange(this)">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-xs text-ink-100 truncate">${escapeHtml(item.nama_produk)}</p>
+                        <p class="text-[10px] text-ink-400">${ket}${!bisaRetur ? ' &middot; semua sudah diretur' : ''}</p>
+                    </div>
+                    <input type="number" min="1" max="${sisa}" value="${sisa > 0 ? 1 : 0}" data-detail-id="${item.id}"
+                           class="retur-qty w-14 border border-ink-700 rounded-lg px-2 py-1 text-xs text-center font-bold shrink-0"
+                           disabled oninput="clampReturQty(this)">
+                </div>`;
+            }).join('');
+
+            const histWrap = document.getElementById('retur-detail-retur-history');
+            if (trx.retur && trx.retur.length > 0) {
+                histWrap.classList.remove('hidden');
+                document.getElementById('retur-riwayat-list').innerHTML = trx.retur.map(r => {
+                    const w = new Date(r.created_at.replace(' ', 'T') + 'Z').toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
+                    return `<div class="flex justify-between text-xs"><span class="text-ink-300">${w}${r.alasan ? ` &middot; ${escapeHtml(r.alasan)}` : ''}</span><span class="font-bold text-amber-600">-${formatRp(r.total_retur)}</span></div>`;
+                }).join('');
+            } else {
+                histWrap.classList.add('hidden');
+            }
+
+            document.getElementById('btn-retur-lanjut').disabled = true;
+        }
+
+        // Sama seperti admin.html — checkbox toggle mengaktifkan/nonaktifkan
+        // input qty pasangannya, tombol lanjut aktif kalau minimal 1 tercentang.
+        function onReturCheckChange(checkbox) {
+            const detailId = checkbox.dataset.detailId;
+            const qtyInput = document.querySelector(`.retur-qty[data-detail-id="${detailId}"]`);
+            qtyInput.disabled = !checkbox.checked;
+            if (checkbox.checked) qtyInput.focus();
+
+            const adaYangDicentang = document.querySelectorAll('.retur-check:checked').length > 0;
+            document.getElementById('btn-retur-lanjut').disabled = !adaYangDicentang;
+        }
+
+        function clampReturQty(input) {
+            const max = Number(input.dataset.max);
+            let val = parseInt(input.value || '1');
+            if (val > max) val = max;
+            if (val < 1) val = 1;
+            input.value = val;
+        }
+
+        function openReturApproveModal() {
+            // admin_toko/super_admin yang PAKAI LANGSUNG layar kasir ini sudah py
+            // otoritas sendiri (backend juga tidak mewajibkan confirm_password
+            // untuk role selain kasir) -- jangan minta mereka konfirmasi ulang
+            // password ke diri sendiri, langsung proses.
+            if (currentUser && currentUser.role !== 'kasir') {
+                submitReturDenganApproval();
+                return;
+            }
+            document.getElementById('retur-approve-password').value = '';
+            document.getElementById('retur-approve-error').classList.add('hidden');
+            const m = document.getElementById('modal-retur-approve');
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+
+        function closeReturApproveModal() {
+            const m = document.getElementById('modal-retur-approve');
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        async function submitReturDenganApproval() {
+            const isKasir = currentUser && currentUser.role === 'kasir';
+            const errEl = document.getElementById('retur-approve-error');
+            let confirm_password;
+
+            if (isKasir) {
+                errEl.classList.add('hidden');
+                confirm_password = document.getElementById('retur-approve-password').value;
+                if (!confirm_password) {
+                    errEl.innerText = 'Password wajib diisi.';
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+            }
+            // Kalau bukan kasir (admin_toko/super_admin submit langsung tanpa
+            // modal konfirmasi -- lihat openReturApproveModal()), confirm_password
+            // sengaja dibiarkan undefined: backend cuma mewajibkannya untuk
+            // role 'kasir', diabaikan untuk role lain.
+
+            const checked = [...document.querySelectorAll('.retur-check:checked')];
+            const items = checked.map(cb => {
+                const detailId = Number(cb.dataset.detailId);
+                const qtyInput = document.querySelector(`.retur-qty[data-detail-id="${detailId}"]`);
+                return { detail_id: detailId, qty: Number(qtyInput.value) };
+            });
+            const alasan = document.getElementById('retur-alasan').value.trim();
+            const metode_pengembalian = document.querySelector('input[name="retur-metode"]:checked').value;
+
+            const btn = document.getElementById('btn-retur-approve-submit');
+            if (isKasir) { btn.disabled = true; btn.innerText = 'Memproses...'; }
+            else showToast('Memproses retur...');
+            try {
+                const res = await fetch(`${API_BASE}/api/transaksi/${returDetailData.id}/retur`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ items, alasan: alasan || undefined, confirm_password, metode_pengembalian }),
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Gagal memproses retur');
+
+                closeReturApproveModal();
+                closeReturDetailModal();
+                showToast('Retur berhasil diproses');
+                // Stok produk berubah -- muat ulang daftar produk supaya kasir
+                // langsung lihat angka stok terbaru tanpa perlu refresh manual.
+                await loadProducts();
+            } catch (e) {
+                if (isKasir) {
+                    errEl.innerText = e.message;
+                    errEl.classList.remove('hidden');
+                } else {
+                    showToast(e.message, 'error');
+                }
+            } finally {
+                if (isKasir) { btn.disabled = false; btn.innerText = 'Konfirmasi & Proses'; }
+            }
+        }
+
+        // ==========================================
+        // 2. INDEXED DB LOGIC (REAL IMPLEMENTATION)
+        // ==========================================
+        const DB_NAME = 'KasirCloud_MobileDB';
+        const STORE_NAME = 'offline_tx';
+        let db;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'offline_uuid' });
+                    }
+                };
+                request.onsuccess = (event) => { db = event.target.result; resolve(); checkOfflineQueue(); };
+                request.onerror = (event) => reject("DB Error");
+            });
+        }
+
+        function saveTxToIDB(tx) {
+            return new Promise((resolve) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                store.add(tx);
+                transaction.oncomplete = () => { checkOfflineQueue(); resolve(); };
+            });
+        }
+
+        function getTxFromIDB() {
+            return new Promise((resolve) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+            });
+        }
+
+        function deleteTxFromIDB(uuid) {
+            return new Promise((resolve) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                store.delete(uuid);
+                transaction.oncomplete = () => resolve();
+            });
+        }
+
+        async function checkOfflineQueue() {
+            if(!db) return;
+            const records = await getTxFromIDB();
+            const badge = document.getElementById('header-status');
+
+            if (!navigator.onLine) {
+                badge.innerHTML = `<i class="fas fa-circle text-[8px] text-red-500 mr-1 shadow-[0_0_5px_#ef4444]"></i>Offline (${records.length} pending)`;
+            } else if (records.length > 0) {
+                // Badge jujur nampilin jumlah pending selama masih ada antrian,
+                // walau navigator.onLine bilang "online" saat ini (mis. baru saja
+                // pulih dari mati beberapa saat, belum sempat sync ulang).
+                badge.innerHTML = `<i class="fas fa-circle text-[8px] text-amber-400 mr-1 shadow-[0_0_5px_#fbbf24]"></i>Menyinkronkan (${records.length} pending)`;
+                syncOfflineData();
+            } else {
+                badge.innerHTML = `<i class="fas fa-circle text-[8px] text-green-400 mr-1 shadow-[0_0_5px_#4ade80]"></i>Online • JKT`;
+            }
+        }
+
+        async function syncOfflineData() {
+            if(!navigator.onLine) return;
+            // FIX: sebelumnya tidak ada jeda sama sekali antar percobaan sync --
+            // checkOfflineQueue() -> syncOfflineData() -> (gagal, masih ada
+            // antrian) -> checkOfflineQueue() -> syncOfflineData() -> ...
+            // berulang secepat fetch() gagal (bisa <1 detik kalau internet
+            // beneran mati), boros baterai & spam request gagal terus-menerus.
+            // syncInProgress = mutex (jangan tumpang tindih), nextSyncAllowedAt =
+            // backoff (jangan coba lagi sebelum waktunya, makin lama makin
+            // panjang jedanya kalau terus gagal).
+            if (syncInProgress) return;
+            if (Date.now() < nextSyncAllowedAt) return;
+
+            const records = await getTxFromIDB();
+            if(records.length === 0) return;
+
+            syncInProgress = true;
+            const ind = document.getElementById('sync-indicator');
+            const icon = document.getElementById('sync-icon');
+            const text = document.getElementById('sync-text');
+            
+            ind.classList.remove('-translate-y-10', 'opacity-0');
+            ind.classList.add('translate-y-4', 'opacity-100');
+            icon.className = 'fas fa-sync fa-spin text-blue-400';
+            text.innerText = `Syncing ${records.length} transaksi...`;
+
+            let berhasil = 0;
+            let gagal = 0;
+
+            for (let tx of records) {
+                try {
+                    // subtotalTx HARUS net dari diskon per-item (i.diskon_item), bukan
+                    // harga kotor — kalau tidak, pajak yang dihitung ulang di bawah
+                    // (dari tx.total) akan meleset untuk transaksi yang punya diskon item.
+                    const subtotalTx = tx.items.reduce((s, i) => s + (i.harga * i.qty - (i.diskon_item || 0)), 0);
+                    const diskonTx = tx.diskon || 0; // fallback 0 untuk record IDB lama sebelum fitur diskon ada
+                    const payload = {
+                        offline_uuid: tx.offline_uuid,
+                        items: tx.items.map(i => ({ id: i.id, nama: i.nama, harga: i.harga, qty: i.qty, diskon_item: i.diskon_item || 0 })),
+                        diskon: diskonTx,
+                        pajak: tx.total - (subtotalTx - diskonTx)
+                    };
+                    // Format baru (pembayaran array/split-payment); fallback ke format
+                    // lama untuk record IndexedDB yang tersimpan sebelum update ini.
+                    if (tx.pembayaran) {
+                        payload.pembayaran = tx.pembayaran;
+                    } else {
+                        payload.metode_bayar = tx.metode;
+                        payload.uang_diterima = tx.metode === 'cash' ? tx.diterima : undefined;
+                    }
+                    const res = await fetch(`${API_BASE}/api/transaksi`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) throw new Error(data.error);
+
+                    // Server mengecek offline_uuid untuk mencegah duplikasi (idempotent),
+                    // jadi baris ini aman dihapus dari antrian lokal setelah dikonfirmasi server.
+                    await deleteTxFromIDB(tx.offline_uuid);
+                    berhasil++;
+                } catch {
+                    // Biarkan tersisa di antrian, dicoba lagi di sync berikutnya
+                    gagal++;
+                }
+            }
+
+            if (gagal === 0) {
+                icon.className = 'fas fa-check-circle text-green-400';
+                text.innerText = `Semua data tersinkronisasi! (${berhasil} transaksi)`;
+                syncBackoffMs = 0; // reset backoff -- koneksi terbukti pulih & lancar
+                nextSyncAllowedAt = 0;
+            } else {
+                icon.className = 'fas fa-exclamation-triangle text-orange-400';
+                text.innerText = `${berhasil} sukses, ${gagal} gagal — dicoba lagi nanti`;
+                // Exponential backoff: 10s -> 20s -> 40s ... mentok 5 menit,
+                // supaya tidak spam request selama internet masih beneran mati.
+                syncBackoffMs = Math.min(syncBackoffMs ? syncBackoffMs * 2 : 10000, 5 * 60 * 1000);
+                nextSyncAllowedAt = Date.now() + syncBackoffMs;
+            }
+            syncInProgress = false;
+            checkOfflineQueue();
+
+            setTimeout(() => {
+                ind.classList.remove('translate-y-4', 'opacity-100');
+                ind.classList.add('-translate-y-10', 'opacity-0');
+            }, 2000);
+        }
+
+        // ==========================================
+        // 3. UI RENDERING & FILTERING
+        // ==========================================
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playFeedback(type) {
+            initAudio();
+            if (navigator.vibrate) navigator.vibrate(type === 'success' ? [30, 50, 30] : 20);
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            
+            if (type === 'beep') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(850, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1);
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'success') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        function renderProducts(searchQuery = '') {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+            
+            let filtered = products;
+            if (currentCategory !== 'Semua') {
+                filtered = filtered.filter(p => p.kategori === currentCategory);
+            }
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                filtered = filtered.filter(p => p.nama.toLowerCase().includes(q) || p.barcode.includes(q));
+            }
+
+            if(filtered.length === 0) {
+                grid.innerHTML = '<div class="col-span-2 sm:col-span-3 text-center text-ink-400 py-10">Produk tidak ditemukan</div>';
+                return;
+            }
+
+            filtered.forEach((p, index) => {
+                const card = document.createElement('div');
+                card.className = 'card-hover bg-ink-900 rounded-2xl p-3 shadow-sm flex flex-col active:scale-95 transition-transform touch-manipulation border border-ink-800 cursor-pointer';
+                card.onclick = () => { 
+                    playFeedback('beep'); 
+                    card.classList.add('animate-tap');
+                    setTimeout(() => card.classList.remove('animate-tap'), 200);
+                    addToCart(p); 
+                };
+                const stokBadgeClass = p.stok <= 0
+                    ? 'bg-red-500 text-white'
+                    : p.stok <= 5
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-white/90 text-blue-600';
+                card.innerHTML = `
+                    <div class="relative mb-2">
+                        <img src="${escapeHtml(p.img)}" class="w-full aspect-square object-cover rounded-xl bg-ink-950 border border-ink-800" loading="lazy">
+                        <span class="absolute top-2 right-2 text-[9px] font-bold backdrop-blur px-1.5 py-0.5 rounded shadow-sm ${stokBadgeClass}">Stok ${p.stok}</span>
+                    </div>
+                    <h3 class="font-bold text-ink-100 text-[11px] leading-tight mb-1 line-clamp-2">${escapeHtml(p.nama)}</h3>
+                    <p class="text-[#a17423] font-extrabold text-sm mt-auto">${formatRp(p.harga)}</p>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // 4. CART & DRAWER LOGIC
+        // ==========================================
+        let isDrawerOpen = false;
+        
+        function toggleCartDrawer() {
+            isDrawerOpen = !isDrawerOpen;
+            const drawer = document.getElementById('cart-drawer');
+            const bg = document.getElementById('cart-drawer-bg');
+            const floating = document.getElementById('floating-cart');
+            
+            if (isDrawerOpen) {
+                drawer.classList.remove('drawer-closed'); drawer.classList.add('drawer-open');
+                bg.classList.remove('opacity-0', 'pointer-events-none');
+                floating.classList.add('translate-y-24'); 
+            } else {
+                drawer.classList.remove('drawer-open'); drawer.classList.add('drawer-closed');
+                bg.classList.add('opacity-0', 'pointer-events-none');
+                if(cart.length > 0) floating.classList.remove('translate-y-24');
+            }
+        }
+
+        function addToCart(product) {
+            const idx = cart.findIndex(i => i.id === product.id);
+            const qtyBaru = (idx > -1 ? cart[idx].qty : 0) + 1;
+
+            if (idx > -1) cart[idx].qty += 1;
+            else cart.push({ ...product, qty: 1, diskon_item: 0 });
+
+            updateCartUI();
+
+            // Peringatan (bukan blocking — bisnis sengaja izinkan stok minus untuk
+            // kasus transaksi offline yang telat sync, lihat PRD 8.4 di backend).
+            // Kasir tetap perlu tahu supaya bisa cek fisik barang sebelum lanjut.
+            if (qtyBaru > product.stok) {
+                playFeedback('beep');
+                showToast(`⚠️ Stok ${product.nama} sisa ${product.stok}, tapi tetap ditambahkan`, 'warning');
+                return;
+            }
+
+            if(!isDrawerOpen) {
+                const fc = document.getElementById('floating-cart');
+                fc.classList.remove('hidden', 'translate-y-24');
+                fc.classList.add('animate-tap');
+                setTimeout(() => fc.classList.remove('animate-tap'), 200);
+                showToast(product.nama);
+            }
+        }
+
+        function updateQty(idx, delta) {
+            playFeedback('beep');
+            cart[idx].qty += delta;
+            if (cart[idx].qty <= 0) {
+                cart.splice(idx, 1);
+            } else {
+                if (delta > 0 && cart[idx].qty > cart[idx].stok) {
+                    showToast(`⚠️ Stok ${cart[idx].nama} sisa ${cart[idx].stok}`, 'warning');
+                }
+                // Diskon item tidak boleh nyangkut melebihi harga baris baru
+                // kalau qty dikurangi (mis. diskon Rp5rb untuk 3pcs, qty diturunkan ke 1pcs).
+                const maxDiskon = cart[idx].harga * cart[idx].qty;
+                if (cart[idx].diskon_item > maxDiskon) cart[idx].diskon_item = maxDiskon;
+            }
+            updateCartUI();
+        }
+
+        // ==========================================
+        // 4c. INPUT QTY MANUAL (ketuk angka qty di cart)
+        // ==========================================
+        let qtyModalIdx = null;
+
+        function editQtyManual(idx) {
+            qtyModalIdx = idx;
+            const item = cart[idx];
+            document.getElementById('qty-modal-nama').innerText = item.nama;
+            document.getElementById('qty-modal-stok').innerText = item.stok;
+            const input = document.getElementById('input-qty-manual');
+            input.value = String(item.qty);
+            const m = document.getElementById('modal-qty');
+            m.classList.remove('hidden'); m.classList.add('flex');
+            setTimeout(() => { input.focus(); input.select(); }, 50);
+        }
+
+        function closeQtyModal() {
+            const m = document.getElementById('modal-qty');
+            m.classList.add('hidden'); m.classList.remove('flex');
+            qtyModalIdx = null;
+        }
+
+        function applyQtyManual() {
+            if (qtyModalIdx === null) return;
+            const val = parseInt(document.getElementById('input-qty-manual').value || '0');
+
+            if (val <= 0) {
+                cart.splice(qtyModalIdx, 1);
+            } else {
+                cart[qtyModalIdx].qty = val;
+                if (val > cart[qtyModalIdx].stok) {
+                    showToast(`⚠️ Stok ${cart[qtyModalIdx].nama} sisa ${cart[qtyModalIdx].stok}, tapi tetap disimpan`, 'warning');
+                }
+                const maxDiskon = cart[qtyModalIdx].harga * cart[qtyModalIdx].qty;
+                if (cart[qtyModalIdx].diskon_item > maxDiskon) cart[qtyModalIdx].diskon_item = maxDiskon;
+            }
+            closeQtyModal();
+            updateCartUI();
+        }
+        function clearCart(fromDrawer = false) { if(cart.length === 0) return; cart = []; cartDiskon = 0; updateCartUI(); if(fromDrawer) toggleCartDrawer(); }
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-items');
+            const floating = document.getElementById('floating-cart');
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<div class="text-center text-ink-400 py-10"><i class="fas fa-shopping-basket text-4xl mb-2 text-ink-600"></i><p class="font-bold text-sm">Keranjang Kosong</p></div>';
+                document.getElementById('btn-pay').disabled = true;
+                floating.classList.add('translate-y-24'); 
+                setTimeout(() => { if(cart.length===0) floating.classList.add('hidden'); }, 300);
+                cartDiskon = 0; // diskon tidak boleh nyangkut ke transaksi berikutnya
+                updateTotals(0);
+                return;
+            }
+
+            let subtotal = 0; let totalItems = 0;
+            container.innerHTML = '';
+            
+            cart.forEach((item, index) => {
+                const hargaBaris = item.harga * item.qty;
+                const diskonItem = item.diskon_item || 0;
+                const netBaris = hargaBaris - diskonItem;
+                subtotal += netBaris;
+                totalItems += item.qty;
+                container.innerHTML += `
+                    <div class="flex items-center gap-3 bg-ink-900 p-3 rounded-2xl border border-ink-800 shadow-sm">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-xs text-ink-50 truncate">${escapeHtml(item.nama)}</h4>
+                            <p class="text-[10px] text-blue-600 font-bold mt-0.5">${formatRp(item.harga)}</p>
+                            <button onclick="openDiskonItemModal(${index})" class="text-[10px] font-bold mt-1 ${diskonItem > 0 ? 'text-amber-600' : 'text-ink-400'}">
+                                <i class="fas fa-tag mr-1"></i>${diskonItem > 0 ? `Diskon ${formatRp(diskonItem)}` : 'Diskon item'}
+                            </button>
+                        </div>
+                        <div class="flex flex-col items-end shrink-0 gap-2">
+                            <p class="font-bold text-xs text-ink-50">${formatRp(netBaris)}</p>
+                            <div class="flex items-center gap-2 bg-ink-950 rounded-lg border border-ink-700 p-1">
+                                <button onclick="updateQty(${index}, -1)" class="w-6 h-6 flex items-center justify-center bg-ink-900 rounded shadow-sm text-ink-200 active:scale-95"><i class="fas fa-minus text-[10px]"></i></button>
+                                <button onclick="editQtyManual(${index})" class="w-8 text-center text-xs font-bold active:text-blue-600 transition">${item.qty}</button>
+                                <button onclick="updateQty(${index}, 1)" class="w-6 h-6 flex items-center justify-center bg-ink-900 rounded shadow-sm text-ink-200 active:scale-95"><i class="fas fa-plus text-[10px]"></i></button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+
+            document.getElementById('btn-pay').disabled = false;
+            updateTotals(subtotal, totalItems);
+        }
+
+        function updateTotals(subtotal, totalItems = 0) {
+            const diskon = Math.min(cartDiskon, subtotal);
+            const dpp = subtotal - diskon; // Dasar Pengenaan Pajak (setelah diskon)
+            const tax = dpp * (cartPajakPersen / 100);
+            currentTotalPay = dpp + tax;
+            document.getElementById('cart-subtotal').innerText = formatRp(subtotal);
+            document.getElementById('cart-diskon').innerText = `- ${formatRp(diskon)}`;
+            document.getElementById('cart-tax').innerText = formatRp(tax);
+            document.getElementById('cart-total').innerText = formatRp(currentTotalPay);
+            document.getElementById('fc-count').innerText = totalItems;
+            document.getElementById('fc-total').innerText = formatRp(currentTotalPay);
+        }
+
+        // ==========================================
+        // 4b. DISKON TRANSAKSI
+        // ==========================================
+        function openDiskonModal() {
+            if (cart.length === 0) return;
+            const subtotal = cart.reduce((s, i) => s + (i.harga * i.qty - (i.diskon_item || 0)), 0);
+            document.getElementById('diskon-max-info').innerText = formatRp(subtotal);
+            document.getElementById('input-diskon').value = cartDiskon > 0 ? String(cartDiskon) : '';
+            const m = document.getElementById('modal-diskon');
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+
+        function closeDiskonModal() {
+            const m = document.getElementById('modal-diskon');
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        function applyDiskon() {
+            const subtotal = cart.reduce((s, i) => s + (i.harga * i.qty - (i.diskon_item || 0)), 0);
+            let val = parseInt(document.getElementById('input-diskon').value || '0');
+            if (val > subtotal) val = subtotal; // diskon tidak boleh melebihi subtotal (setelah diskon item)
+            cartDiskon = val;
+            closeDiskonModal();
+            updateCartUI();
+            if (val > 0) showToast(`Diskon ${formatRp(val)} diterapkan`);
+        }
+
+        // ==========================================
+        // 4b2. DISKON PER-ITEM
+        // ==========================================
+        let diskonItemModalIdx = null;
+
+        function openDiskonItemModal(idx) {
+            diskonItemModalIdx = idx;
+            const item = cart[idx];
+            const maxDiskon = item.harga * item.qty;
+            document.getElementById('diskon-item-modal-nama').innerText = item.nama;
+            document.getElementById('diskon-item-max-info').innerText = formatRp(maxDiskon);
+            const input = document.getElementById('input-diskon-item');
+            input.value = item.diskon_item > 0 ? String(item.diskon_item) : '';
+            const m = document.getElementById('modal-diskon-item');
+            m.classList.remove('hidden'); m.classList.add('flex');
+            setTimeout(() => { input.focus(); }, 50);
+        }
+
+        function closeDiskonItemModal() {
+            const m = document.getElementById('modal-diskon-item');
+            m.classList.add('hidden'); m.classList.remove('flex');
+            diskonItemModalIdx = null;
+        }
+
+        function applyDiskonItem() {
+            if (diskonItemModalIdx === null) return;
+            const item = cart[diskonItemModalIdx];
+            const maxDiskon = item.harga * item.qty;
+            let val = parseInt(document.getElementById('input-diskon-item').value || '0');
+            if (val > maxDiskon) val = maxDiskon; // diskon item tidak boleh melebihi harga baris ini
+            if (val < 0) val = 0;
+            item.diskon_item = val;
+            closeDiskonItemModal();
+            updateCartUI();
+            if (val > 0) showToast(`Diskon ${formatRp(val)} diterapkan ke ${item.nama}`);
+        }
+
+        // ==========================================
+        // 4c. PAJAK TRANSAKSI
+        // ==========================================
+        function openPajakModal() {
+            if (cart.length === 0) return;
+            document.getElementById('input-pajak').value = cartPajakPersen > 0 ? String(cartPajakPersen) : '';
+            const m = document.getElementById('modal-pajak');
+            m.classList.remove('hidden'); m.classList.add('flex');
+        }
+
+        function closePajakModal() {
+            const m = document.getElementById('modal-pajak');
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        function setPajakQuick(persen) {
+            document.getElementById('input-pajak').value = persen > 0 ? String(persen) : '';
+        }
+
+        function applyPajak() {
+            let val = parseFloat(document.getElementById('input-pajak').value || '0');
+            if (isNaN(val) || val < 0) val = 0;
+            if (val > 100) val = 100; // jaga-jaga input tidak masuk akal
+            cartPajakPersen = val;
+            localStorage.setItem('kasir_pajak_persen', String(val)); // diingat untuk transaksi berikutnya
+            closePajakModal();
+            updateCartUI();
+            showToast(val > 0 ? `Pajak ${val}% diterapkan` : 'Pajak dihapus (0%)');
+        }
+
+        let _toastTimer = null;
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            const iconWrap = document.getElementById('toast-icon-wrap');
+            const iconEl = document.getElementById('toast-icon');
+            document.getElementById('toast-msg').innerText = msg;
+
+            // FIX: sebelumnya ikon toast selalu hijau/centang walau pesannya error
+            // (mis. gagal akses kamera) — sekarang warna & ikon menyesuaikan tipe.
+            const styles = {
+                success: { bg: 'bg-blue-500', icon: 'fa-check' },
+                error: { bg: 'bg-red-500', icon: 'fa-xmark' },
+                warning: { bg: 'bg-amber-500', icon: 'fa-triangle-exclamation' },
+            };
+            const s = styles[type] || styles.success;
+            iconWrap.className = `w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${s.bg}`;
+            iconEl.className = `fas ${s.icon} text-white`;
+
+            // FIX: sebelumnya setTimeout tidak disimpan/di-clear — kalau ada toast
+            // baru muncul sebelum toast sebelumnya selesai (mis. tap produk
+            // beruntun), timer LAMA tetap jalan dan menyembunyikan toast BARU
+            // sebelum waktunya (toast berkedip/hilang lebih cepat dari 2 detik).
+            if (_toastTimer) clearTimeout(_toastTimer);
+            t.classList.remove('-translate-y-32'); t.classList.add('translate-y-0');
+            _toastTimer = setTimeout(() => { t.classList.remove('translate-y-0'); t.classList.add('-translate-y-32'); }, 2000);
+        }
+
+        // ==========================================
+        // 5. PAYMENT & NUMPAD
+        // ==========================================
+        document.querySelectorAll('.pay-method').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.pay-method').forEach(b => {
+                    b.classList.remove('border-blue-600', 'bg-blue-50', 'text-blue-700', 'border-2');
+                    b.classList.add('border-ink-700', 'text-ink-300', 'border');
+                });
+                const target = e.currentTarget;
+                target.classList.remove('border-ink-700', 'text-ink-300', 'border');
+                target.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-700', 'border-2');
+                activePaymentMethod = target.dataset.method;
+            });
+        });
+
+        function triggerPayment() {
+            if (cart.length === 0) return;
+            if (activePaymentMethod === 'cash') {
+                uangDiterimaStr = "";
+                document.getElementById('numpad-tagihan').innerText = formatRp(currentTotalPay);
+                updateNumpadDisplay();
+                const m = document.getElementById('numpad-modal');
+                m.classList.remove('drawer-closed'); m.classList.add('drawer-open');
+                toggleCartDrawer(); // Tutup keranjang di belakang layar
+            } else if (activePaymentMethod === 'split') {
+                openSplitModal();
+            } else {
+                processFinalPayment(0, 0); 
+            }
+        }
+
+        function cancelNumpad() {
+            const m = document.getElementById('numpad-modal');
+            m.classList.remove('drawer-open'); m.classList.add('drawer-closed');
+            // Buka kembali drawer keranjang karena dibatalkan
+            setTimeout(() => { if(!isDrawerOpen) toggleCartDrawer(); }, 300);
+        }
+
+        function typeNumpad(val) {
+            playFeedback('beep');
+            // Mencegah "0" di awal
+            if(uangDiterimaStr === "" && (val === "0" || val === "000")) return;
+            
+            if (val === 'C') uangDiterimaStr = uangDiterimaStr.slice(0, -1);
+            else if (uangDiterimaStr.length < 10) uangDiterimaStr += val;
+            updateNumpadDisplay();
+        }
+        function setUangDiterima(val) { playFeedback('beep'); if (val === 'pas') uangDiterimaStr = currentTotalPay.toString(); updateNumpadDisplay(); }
+        function addUang(val) { 
+            playFeedback('beep'); 
+            let current = parseInt(uangDiterimaStr || "0"); 
+            uangDiterimaStr = (current + val).toString(); 
+            updateNumpadDisplay(); 
+        }
+
+        function updateNumpadDisplay() {
+            const val = parseInt(uangDiterimaStr || "0");
+            document.getElementById('input-diterima').value = val > 0 ? formatRp(val) : "";
+            let kembalian = val - currentTotalPay;
+            const elKembalian = document.getElementById('numpad-kembalian');
+            const btnConfirm = document.getElementById('btn-confirm-pay');
+            
+            if (kembalian >= 0 && val > 0) {
+                elKembalian.innerText = formatRp(kembalian); elKembalian.classList.replace('text-red-500', 'text-green-500'); btnConfirm.disabled = false;
+            } else {
+                elKembalian.innerText = val > 0 ? "- " + formatRp(Math.abs(kembalian)) : "Rp 0"; elKembalian.classList.replace('text-green-500', 'text-red-500'); btnConfirm.disabled = true;
+            }
+        }
+
+        // Wrapper tipis untuk alur single-method lama (numpad tunai / tap QRIS-debit
+        // langsung). Membungkus input jadi 1 baris `pembayaran`, lalu diteruskan ke
+        // finalizeTransaction() yang sama dengan alur split payment.
+        async function processFinalPayment(forceDiterima, forceKembali) {
+            const diterima = forceDiterima !== undefined ? forceDiterima : parseInt(uangDiterimaStr);
+
+            const m = document.getElementById('numpad-modal');
+            if(m.classList.contains('drawer-open')){
+                m.classList.remove('drawer-open'); m.classList.add('drawer-closed');
+            }
+            if(isDrawerOpen) toggleCartDrawer();
+
+            const entries = activePaymentMethod === 'cash'
+                ? [{ metode: 'cash', jumlah: diterima }]
+                : [{ metode: activePaymentMethod, jumlah: currentTotalPay }];
+
+            await finalizeTransaction(entries);
+        }
+
+        /**
+         * Titik masuk tunggal untuk menyimpan transaksi, dipakai baik oleh alur
+         * pembayaran satu metode (cash/qris/debit) maupun split payment. `entries`
+         * berbentuk [{ metode, jumlah }, ...] — kembalian dihitung ulang di sini
+         * dengan aturan yang sama seperti server (kembalian hanya sah dari tunai)
+         * supaya struk yang tampil di layar konsisten dengan yang tersimpan di DB.
+         */
+        async function finalizeTransaction(entries) {
+            const uuid = crypto.randomUUID ? crypto.randomUUID() : `OFF-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            // Subtotal net dari diskon per-item — HARUS sama dengan yang dipakai
+            // updateCartUI()/updateTotals() supaya dpp & pajak yang dikirim ke server
+            // konsisten dengan yang ditampilkan di layar sebelum kasir menekan bayar.
+            const subtotal = cart.reduce((s, i) => s + (i.harga * i.qty - (i.diskon_item || 0)), 0);
+            const diskon = Math.min(cartDiskon, subtotal);
+            const dpp = subtotal - diskon; // Dasar Pengenaan Pajak, samakan dengan updateTotals()
+            const pajak = currentTotalPay - dpp;
+
+            const cashTotal = entries.filter(e => e.metode === 'cash').reduce((s, e) => s + e.jumlah, 0);
+            const nonCashTotal = entries.filter(e => e.metode !== 'cash').reduce((s, e) => s + e.jumlah, 0);
+            const kembalian = Math.max(0, cashTotal - (currentTotalPay - nonCashTotal));
+
+            const txData = {
+                offline_uuid: uuid,
+                items: [...cart],
+                total: currentTotalPay,
+                diskon,
+                pembayaran: entries,
+                kembalian,
+                timestamp: new Date().toISOString()
+            };
+
+            const payload = {
+                offline_uuid: uuid,
+                items: cart.map(i => ({ id: i.id, nama: i.nama, harga: i.harga, qty: i.qty, diskon_item: i.diskon_item || 0 })),
+                pembayaran: entries,
+                diskon,
+                pajak: pajak
+            };
+
+            if (!navigator.onLine) {
+                // navigator.onLine sudah bilang tidak ada koneksi -- langsung antre
+                // lokal tanpa buang waktu coba fetch() yang pasti gagal.
+                await saveTxToIDB(txData);
+            } else {
+                // Mode online: coba kirim langsung ke server. Kalau fetch gagal
+                // (mati listrik router, sinyal hilang, dsb — bukan cuma simulasi),
+                // otomatis fallback ke antrian offline agar transaksi TIDAK HILANG.
+                //
+                // FIX (offline): sebelumnya blok catch ini menangkap DUA hal yang
+                // beda — kegagalan jaringan ASLI (fetch() melempar) DAN penolakan
+                // SAH dari server (respons balik tapi success:false, mis. shift
+                // belum dibuka / produk nonaktif / stok berubah) — keduanya
+                // diperlakukan sama: masuk antrian IndexedDB dengan pesan "koneksi
+                // bermasalah". Transaksi yang DITOLAK server itu akan gagal lagi
+                // dan lagi setiap kali disinkronkan (ditolak dengan alasan yang
+                // sama), macet permanen di antrian TANPA pernah tercatat di
+                // database — padahal struk sudah tercetak & barang sudah keluar,
+                // jadi penjualan ini tidak akan pernah muncul di laporan. Sekarang
+                // keduanya dibedakan: hanya kegagalan jaringan murni yang masuk
+                // antrian offline; penolakan server ditampilkan apa adanya supaya
+                // kasir tahu harus memperbaiki sesuatu (mis. buka shift dulu),
+                // bukan mengira ini cuma masalah sinyal.
+                let res;
+                try {
+                    res = await fetch(`${API_BASE}/api/transaksi`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(payload)
+                    });
+                } catch (networkErr) {
+                    await saveTxToIDB(txData);
+                    showToast('Koneksi bermasalah — transaksi disimpan & akan disinkronkan otomatis.', 'warning');
+                    setTimeout(() => buildReceipt(txData), 350);
+                    if (activeShift) checkShiftStatus();
+                    return;
+                }
+
+                const data = await res.json().catch(() => ({ success: false, error: 'Respons server tidak valid' }));
+                if (!res.ok || !data.success) {
+                    // Server benar-benar MENOLAK transaksi ini — jangan diam-diam
+                    // ditumpuk ke antrian offline (akan gagal terus tanpa henti).
+                    // Beri tahu kasir apa adanya supaya transaksi bisa diperbaiki
+                    // & dicoba ulang secara sadar.
+                    showToast(data.error || 'Transaksi ditolak server', 'error');
+                    return;
+                }
+            }
+
+            setTimeout(() => buildReceipt(txData), 350);
+
+            // Refresh perkiraan kas di badge header (hanya relevan kalau ada shift
+            // aktif; transaksi yang jatuh ke antrian offline baru tercermin di kas
+            // sistem setelah tersinkronisasi ke server).
+            if (activeShift) checkShiftStatus();
+        }
+
+        // Data transaksi terakhir yang berhasil dibuat strukmya — dipakai ulang oleh
+        // cetak Bluetooth (printReceiptViaBluetooth) supaya tidak perlu baca ulang DOM.
+        let lastReceiptData = null;
+
+        /**
+         * Render area ikon footer struk sesuai pengaturan admin (Kustomisasi Struk):
+         * - 'tidak'  : kosong, footer cuma teks
+         * - 'qr'     : QR code ASLI (bisa di-scan) dari strukSettings.struk_qr_data,
+         *              digenerate client-side pakai QRCode.js (tidak kirim data ke
+         *              server pihak ketiga mana pun — semua diproses di browser).
+         * - 'judul'  : nama aplikasi/toko ditampilkan sebagai teks besar (mirip logo teks)
+         */
+        function renderReceiptIcon() {
+            const area = document.getElementById('receipt-icon-area');
+            if (!area) return;
+            area.innerHTML = '';
+
+            if (strukSettings.struk_footer_ikon === 'qr' && strukSettings.struk_qr_data) {
+                try {
+                    const box = document.createElement('div');
+                    box.style.display = 'inline-block';
+                    area.appendChild(box);
+                    new QRCode(box, { text: strukSettings.struk_qr_data, width: 90, height: 90, correctLevel: QRCode.CorrectLevel.M });
+                } catch {
+                    // Library QR gagal dimuat (mis. sedang offline) — biarkan area kosong,
+                    // jangan sampai gagal render struk gara-gara ini.
+                }
+            } else if (strukSettings.struk_footer_ikon === 'judul') {
+                const el = document.createElement('p');
+                el.className = 'font-extrabold text-sm tracking-wide';
+                el.innerText = currentToko?.nama || document.title || 'KASIR CLOUD';
+                area.appendChild(el);
+            }
+            // 'tidak' → area dibiarkan kosong
+        }
+
+        function buildReceipt(txData) {
+            playFeedback('success');
+            const trxId = `TRX-${Date.now().toString().slice(-6)}`;
+            lastReceiptData = { ...txData, trxId };
+            document.getElementById('receipt-date').innerText = new Date().toLocaleString('id-ID', {dateStyle:'short', timeStyle:'short'});
+            document.getElementById('receipt-trx').innerText = trxId;
+
+            const footerEl = document.getElementById('receipt-footer');
+            if (footerEl) footerEl.innerText = strukSettings.struk_footer || 'Terima Kasih';
+            const catatanEl = document.getElementById('receipt-catatan');
+            if (catatanEl) {
+                if (strukSettings.struk_catatan) {
+                    catatanEl.innerText = strukSettings.struk_catatan;
+                    catatanEl.style.display = '';
+                } else {
+                    catatanEl.style.display = 'none';
+                }
+            }
+            renderReceiptIcon();
+            document.getElementById('receipt-method').innerText = txData.pembayaran.length > 1
+                ? 'SPLIT'
+                : (METODE_LABEL[txData.pembayaran[0].metode] || txData.pembayaran[0].metode).toUpperCase();
+
+            let itemsHtml = ''; let sub = 0;
+            txData.items.forEach(i => {
+                const diskonItem = i.diskon_item || 0;
+                const netBaris = i.harga * i.qty - diskonItem;
+                sub += netBaris;
+                itemsHtml += `<div><div class="font-bold">${escapeHtml(i.nama)}</div><div class="flex justify-between text-[10px]"><span>${i.qty} x ${formatRp(i.harga)}</span><span>${formatRp(netBaris)}</span></div>${diskonItem > 0 ? `<div class="flex justify-between text-[10px] text-amber-600"><span>Diskon item</span><span>- ${formatRp(diskonItem)}</span></div>` : ''}</div>`;
+            });
+            document.getElementById('receipt-items').innerHTML = itemsHtml;
+            document.getElementById('r-subtotal').innerText = formatRp(sub);
+
+            const diskonRow = document.getElementById('r-diskon-row');
+            const diskon = txData.diskon || 0;
+            if (diskon > 0) {
+                diskonRow.style.display = 'flex';
+                document.getElementById('r-diskon').innerText = `- ${formatRp(diskon)}`;
+            } else {
+                diskonRow.style.display = 'none';
+            }
+
+            const dpp = sub - diskon;
+            const pajakNominal = txData.pajak || 0;
+            const taxRow = document.getElementById('r-tax-row');
+            if (pajakNominal > 0) {
+                taxRow.style.display = 'flex';
+                // Persen dihitung balik dari nominal supaya struk selalu cocok
+                // dengan pajak yang benar-benar diterapkan saat transaksi ini,
+                // bukan diasumsikan 11% seperti sebelumnya.
+                const persen = dpp > 0 ? Math.round((pajakNominal / dpp) * 1000) / 10 : 0;
+                document.getElementById('r-tax-label').innerText = `Pajak (${persen}%):`;
+                document.getElementById('r-tax').innerText = formatRp(pajakNominal);
+            } else {
+                taxRow.style.display = 'none';
+            }
+            document.getElementById('r-total').innerText = formatRp(txData.total);
+
+            // Rincian tiap metode yang dipakai (1 baris kalau single-method, >1 kalau split)
+            document.getElementById('receipt-payment-rows').innerHTML = txData.pembayaran.map(p => `
+                <div class="flex justify-between"><span>${METODE_LABEL[p.metode] || p.metode}:</span><span>${formatRp(p.jumlah)}</span></div>
+            `).join('');
+
+            const changeRow = document.getElementById('receipt-change-row');
+            if (txData.kembalian > 0) {
+                changeRow.style.display = 'flex';
+                document.getElementById('r-change').innerText = formatRp(txData.kembalian);
+            } else {
+                changeRow.style.display = 'none';
+            }
+
+            const m = document.getElementById('modal-receipt');
+            m.classList.remove('hidden'); m.classList.add('flex');
+            clearCart();
+        }
+
+        function closeReceipt() {
+            const m = document.getElementById('modal-receipt');
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        // ==========================================================
+        // CETAK LANGSUNG KE PRINTER (Bluetooth thermal, ESC/POS)
+        // ==========================================================
+        // Catatan kompatibilitas: pakai Web Bluetooth API — HANYA didukung
+        // Chrome/Edge di Android & Desktop (Safari/iOS TIDAK mendukung Web
+        // Bluetooth sama sekali). Printer thermal Bluetooth murah umumnya
+        // meng-expose profil serial generik, bukan profil "Bluetooth Printer"
+        // standar, jadi daftar UUID di bawah mencakup kandidat paling umum
+        // dipakai vendor printer kasir. Kalau printer tidak cocok dengan
+        // salah satu profil ini, cek dokumentasi printer untuk UUID service-nya.
+        const BT_PRINTER_SERVICES = [0x18f0, 0xffe0, 0xff00];
+        let btDevice = null;
+        let btCharacteristic = null;
+
+        function updateBtPrinterLabel() {
+            const label = document.getElementById('btn-bt-print-label');
+            if (label) label.innerText = btCharacteristic ? `Cetak ke ${btDevice?.name || 'Printer'}` : 'Cetak Langsung ke Printer';
+        }
+
+        async function connectBluetoothPrinter() {
+            if (!navigator.bluetooth) {
+                showToast('Perangkat/browser ini tidak mendukung Bluetooth langsung (pakai Chrome di Android/Desktop)', 'error');
+                return false;
+            }
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: BT_PRINTER_SERVICES,
+                });
+                const server = await device.gatt.connect();
+                let characteristic = null;
+                for (const svcId of BT_PRINTER_SERVICES) {
+                    try {
+                        const service = await server.getPrimaryService(svcId);
+                        const chars = await service.getCharacteristics();
+                        characteristic = chars.find(c => c.properties.writeWithoutResponse) || chars.find(c => c.properties.write) || null;
+                        if (characteristic) break;
+                    } catch {
+                        // Service ini tidak ada di printer ini — coba kandidat berikutnya.
+                    }
+                }
+                if (!characteristic) {
+                    showToast('Printer terhubung, tapi profil cetak tidak dikenali. Coba printer lain, atau cek dokumentasi printer untuk UUID service yang dipakai.', 'error');
+                    return false;
+                }
+                device.addEventListener('gattserverdisconnected', () => {
+                    btDevice = null; btCharacteristic = null;
+                    updateBtPrinterLabel();
+                });
+                btDevice = device;
+                btCharacteristic = characteristic;
+                updateBtPrinterLabel();
+                showToast(`Printer "${device.name || 'Bluetooth'}" terhubung`, 'success');
+                return true;
+            } catch (err) {
+                if (err.name !== 'NotFoundError') showToast('Gagal menghubungkan printer: ' + err.message, 'error');
+                return false;
+            }
+        }
+
+        /** Bangun perintah ESC/POS (byte mentah) dari data struk terakhir. */
+        /**
+         * Bangun perintah ESC/POS standar "GS ( k" untuk mencetak QR code NATIF
+         * di printer (bukan gambar) — didukung hampir semua printer thermal
+         * modern (Epson TM-series & kompatibelnya). Model 2, ukuran modul 6,
+         * error correction M (15%) — kombinasi paling umum & aman dipakai.
+         */
+        function escposQrCode(data) {
+            const enc = new TextEncoder();
+            const dataBytes = enc.encode(data);
+            const parts = [];
+            const push = (arr) => parts.push(new Uint8Array(arr));
+
+            push([0x1d, 0x28, 0x6b, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]); // pilih model QR 2
+            push([0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x43, 0x06]); // ukuran modul = 6
+            push([0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x45, 0x31]); // error correction level M
+
+            const len = dataBytes.length + 3;
+            push([0x1d, 0x28, 0x6b, len & 0xff, (len >> 8) & 0xff, 0x31, 0x50, 0x30]); // simpan data QR
+            parts.push(dataBytes);
+            push([0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x51, 0x30]); // cetak QR dari buffer
+
+            const total = parts.reduce((s, c) => s + c.length, 0);
+            const out = new Uint8Array(total);
+            let offset = 0;
+            for (const c of parts) { out.set(c, offset); offset += c.length; }
+            return out;
+        }
+
+        function buildEscPosReceipt(txData) {
+            const lebar = strukSettings.struk_lebar_kertas === '80' ? 48 : 32; // perkiraan karakter/baris pakai font default
+            const enc = new TextEncoder();
+            const chunks = [];
+            // FIX: formatRp() (Intl.NumberFormat id-ID currency) menyisipkan
+            // NON-BREAKING SPACE (U+00A0) antara "Rp" dan angka, bukan spasi
+            // biasa (U+0020) -- kelihatan sama di layar, tapi saat di-encode
+            // UTF-8 buat dikirim ke printer thermal, U+00A0 jadi 2 BYTE (bukan
+            // 1 byte seperti spasi biasa). Padahal perhitungan lebar kolom di
+            // line() pakai .length (hitung KARAKTER), bukan jumlah byte --
+            // jadi tiap kemunculan "Rp" bikin baris itu geser 1 byte dari yang
+            // dihitung. Lebih parah lagi: banyak printer thermal murah default
+            // ke codepage 1-byte (CP437/WPC1252), bukan UTF-8 -- 2-byte
+            // non-breaking space itu berisiko muncul jadi karakter aneh di
+            // kertas. Ganti ke spasi biasa dulu sebelum di-encode, di SATU
+            // tempat (text()) supaya semua text/line/hr ikut aman otomatis.
+            const text = (s) => chunks.push(enc.encode(s.replace(/\u00a0/g, ' ')));
+            const line = (left = '', right = '') => {
+                const space = Math.max(1, lebar - left.length - right.length);
+                text(left + ' '.repeat(space) + right + '\n');
+            };
+            const hr = () => text('-'.repeat(lebar) + '\n');
+            const ESC = 0x1b, GS = 0x1d;
+            const init = () => chunks.push(new Uint8Array([ESC, 0x40]));
+            const align = (n) => chunks.push(new Uint8Array([ESC, 0x61, n])); // 0 kiri, 1 tengah, 2 kanan
+            const bold = (on) => chunks.push(new Uint8Array([ESC, 0x45, on ? 1 : 0]));
+            const cut = () => chunks.push(new Uint8Array([GS, 0x56, 0x42, 0x00]));
+            const feed = (n) => chunks.push(new Uint8Array([ESC, 0x64, n]));
+
+            init();
+            align(1); bold(true);
+            text(`${currentToko?.nama || 'KASIR CLOUD'}\n`);
+            bold(false);
+            if (strukSettings.struk_tampilkan_alamat === '1' && currentToko?.alamat) text(`${currentToko.alamat}\n`);
+            align(0);
+            hr();
+            text(`${txData.trxId}\n`);
+            text(`${new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}\n`);
+            text(`Kasir: ${currentUser?.nama_lengkap || '-'}\n`);
+            hr();
+            txData.items.forEach(i => {
+                text(`${i.nama}\n`);
+                const diskonItem = i.diskon_item || 0;
+                const netBaris = i.harga * i.qty - diskonItem;
+                line(`${i.qty} x ${formatRp(i.harga)}`, formatRp(netBaris));
+                if (diskonItem > 0) line('  Diskon item', `-${formatRp(diskonItem)}`);
+            });
+            hr();
+            const sub = txData.items.reduce((s, i) => s + (i.harga * i.qty - (i.diskon_item || 0)), 0);
+            line('Subtotal', formatRp(sub));
+            const diskon = txData.diskon || 0;
+            if (diskon > 0) line('Diskon', `-${formatRp(diskon)}`);
+            const pajakNominal = txData.pajak || 0;
+            if (pajakNominal > 0) line('Pajak', formatRp(pajakNominal));
+            bold(true);
+            line('TOTAL', formatRp(txData.total));
+            bold(false);
+            hr();
+            txData.pembayaran.forEach(p => line(METODE_LABEL[p.metode] || p.metode, formatRp(p.jumlah)));
+            if (txData.kembalian > 0) line('Kembali', formatRp(txData.kembalian));
+            hr();
+            align(1);
+            if (strukSettings.struk_footer_ikon === 'qr' && strukSettings.struk_qr_data) {
+                chunks.push(escposQrCode(strukSettings.struk_qr_data));
+                text('\n');
+            } else if (strukSettings.struk_footer_ikon === 'judul') {
+                bold(true);
+                text(`${currentToko?.nama || 'KASIR CLOUD'}\n`);
+                bold(false);
+            }
+            text(`${strukSettings.struk_footer || 'Terima Kasih'}\n`);
+            if (strukSettings.struk_catatan) text(`${strukSettings.struk_catatan}\n`);
+            feed(4);
+            cut();
+
+            const total = chunks.reduce((s, c) => s + c.length, 0);
+            const out = new Uint8Array(total);
+            let offset = 0;
+            for (const c of chunks) { out.set(c, offset); offset += c.length; }
+            return out;
+        }
+
+        async function printReceiptViaBluetooth() {
+            if (!lastReceiptData) {
+                showToast('Tidak ada struk untuk dicetak', 'error');
+                return;
+            }
+            if (!btCharacteristic) {
+                const ok = await connectBluetoothPrinter();
+                if (!ok || !btCharacteristic) return;
+            }
+            try {
+                const bytes = buildEscPosReceipt(lastReceiptData);
+                // Kirim bertahap (chunk kecil) — banyak printer BLE murah punya MTU
+                // kecil (~20-100 byte) & akan memotong/mengabaikan data kalau
+                // dikirim sekaligus dalam satu payload besar.
+                const CHUNK = 100;
+                for (let i = 0; i < bytes.length; i += CHUNK) {
+                    const part = bytes.slice(i, i + CHUNK);
+                    if (btCharacteristic.properties.writeWithoutResponse) {
+                        await btCharacteristic.writeValueWithoutResponse(part);
+                    } else {
+                        await btCharacteristic.writeValue(part);
+                    }
+                }
+                showToast('Struk terkirim ke printer', 'success');
+            } catch (err) {
+                showToast('Gagal mencetak ke printer: ' + err.message, 'error');
+            }
+        }
+
+        // ==========================================
+        // 5b. SPLIT PAYMENT MODAL
+        // ==========================================
+        function openSplitModal() {
+            splitRows = [{ id: ++splitRowSeq, metode: 'cash', jumlah: '' }];
+            document.getElementById('split-tagihan').innerText = formatRp(currentTotalPay);
+            renderSplitRows();
+            const m = document.getElementById('modal-split');
+            m.classList.remove('hidden'); m.classList.add('flex');
+            toggleCartDrawer(); // Tutup keranjang di belakang layar
+        }
+
+        function closeSplitModal() {
+            const m = document.getElementById('modal-split');
+            m.classList.add('hidden'); m.classList.remove('flex');
+        }
+
+        function addSplitRow() {
+            const used = splitRows.map(r => r.metode);
+            const next = ['cash', 'qris', 'debit', 'transfer'].find(m => !used.includes(m)) || 'cash';
+            splitRows.push({ id: ++splitRowSeq, metode: next, jumlah: '' });
+            renderSplitRows();
+        }
+
+        function removeSplitRow(id) {
+            if (splitRows.length <= 1) return; // minimal 1 baris
+            splitRows = splitRows.filter(r => r.id !== id);
+            renderSplitRows();
+        }
+
+        function updateSplitRowMetode(id, metode) {
+            const row = splitRows.find(r => r.id === id);
+            if (row) row.metode = metode;
+            renderSplitSummary();
+        }
+
+        function updateSplitRowJumlah(id, value) {
+            const row = splitRows.find(r => r.id === id);
+            if (row) row.jumlah = value.replace(/[^0-9]/g, '');
+            const input = document.getElementById(`split-jumlah-${id}`);
+            if (input && input.value !== row.jumlah) input.value = row.jumlah;
+            renderSplitSummary();
+        }
+
+        function renderSplitRows() {
+            const wrap = document.getElementById('split-rows');
+            wrap.innerHTML = splitRows.map(row => `
+                <div class="flex gap-2 items-center">
+                    <select onchange="updateSplitRowMetode(${row.id}, this.value)" class="border border-ink-700 rounded-xl px-2 py-3 text-xs font-bold text-ink-100 bg-ink-900 flex-1">
+                        ${Object.entries(METODE_LABEL).map(([val, label]) => `<option value="${val}" ${row.metode === val ? 'selected' : ''}>${label}</option>`).join('')}
+                    </select>
+                    <input id="split-jumlah-${row.id}" type="text" inputmode="numeric" placeholder="Rp 0" value="${row.jumlah}"
+                           oninput="updateSplitRowJumlah(${row.id}, this.value)"
+                           class="border border-ink-700 rounded-xl px-3 py-3 text-sm font-bold text-ink-50 flex-1 text-right font-mono">
+                    <button onclick="removeSplitRow(${row.id})" ${splitRows.length <= 1 ? 'disabled' : ''}
+                            class="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center active:bg-red-100 transition shrink-0 disabled:opacity-30">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                    </button>
+                </div>
+            `).join('');
+            renderSplitSummary();
+        }
+
+        function renderSplitSummary() {
+            const cashTotal = splitRows.filter(r => r.metode === 'cash').reduce((s, r) => s + (parseInt(r.jumlah) || 0), 0);
+            const nonCashTotal = splitRows.filter(r => r.metode !== 'cash').reduce((s, r) => s + (parseInt(r.jumlah) || 0), 0);
+            const totalDibayar = cashTotal + nonCashTotal;
+            document.getElementById('split-total-dibayar').innerText = formatRp(totalDibayar);
+
+            const labelEl = document.getElementById('split-sisa-label');
+            const sisaEl = document.getElementById('split-sisa');
+            const btn = document.getElementById('btn-confirm-split');
+            const adaJumlahKosong = splitRows.some(r => !r.jumlah || parseInt(r.jumlah) <= 0);
+
+            if (nonCashTotal > currentTotalPay) {
+                // Non-tunai tidak boleh melebihi tagihan — kembalian cuma sah untuk tunai
+                labelEl.innerText = 'Non-tunai berlebih';
+                sisaEl.innerText = 'Kurangi nominal';
+                sisaEl.className = 'text-red-500';
+                btn.disabled = true;
+                return;
+            }
+
+            const kembalian = cashTotal - (currentTotalPay - nonCashTotal);
+            if (kembalian < 0) {
+                labelEl.innerText = 'Kurang Bayar';
+                sisaEl.innerText = formatRp(Math.abs(kembalian));
+                sisaEl.className = 'text-red-500';
+                btn.disabled = true;
+            } else {
+                labelEl.innerText = kembalian > 0 ? 'Kembalian (tunai)' : 'Lunas';
+                sisaEl.innerText = formatRp(kembalian);
+                sisaEl.className = 'text-green-600';
+                btn.disabled = adaJumlahKosong;
+            }
+        }
+
+        async function confirmSplitPayment() {
+            const entries = splitRows
+                .filter(r => parseInt(r.jumlah) > 0)
+                .map(r => ({ metode: r.metode, jumlah: parseInt(r.jumlah) }));
+            if (entries.length === 0) return;
+
+            closeSplitModal();
+            if (isDrawerOpen) toggleCartDrawer();
+            await finalizeTransaction(entries);
+        }
+
+        // ==========================================
+        // 6. HOLD CART LOGIC
+        // ==========================================
+        function holdCart() {
+            if (cart.length === 0) return;
+            heldCarts.push({ id: `HOLD-${Date.now().toString().slice(-4)}`, time: new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}), items: [...cart], total: currentTotalPay });
+            updateHoldBadge(); clearCart(true); showToast("Pesanan ditahan.");
+        }
+        function updateHoldBadge() {
+            const b = document.getElementById('badge-hold');
+            if (heldCarts.length > 0) { b.innerText = heldCarts.length; b.classList.remove('hidden'); }
+            else b.classList.add('hidden');
+        }
+        function toggleHoldList() {
+            const m = document.getElementById('modal-hold');
+            const list = document.getElementById('hold-list');
+            if (m.classList.contains('hidden')) {
+                list.innerHTML = heldCarts.length ? '' : '<p class="text-center text-ink-400 py-6 text-sm font-bold">Kosong</p>';
+                heldCarts.forEach((hc, i) => {
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center p-3 border border-ink-700 rounded-2xl bg-ink-950 mb-2">
+                            <div><p class="font-bold text-sm text-blue-600">${hc.id}</p><p class="text-[10px] font-bold text-ink-300">${hc.time} • ${formatRp(hc.total)}</p></div>
+                            <button onclick="restoreHold(${i})" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold active:scale-95 shadow-md transition">Buka</button>
+                        </div>
+                    `;
+                });
+                m.classList.remove('hidden'); m.classList.add('flex');
+            } else {
+                m.classList.add('hidden'); m.classList.remove('flex');
+            }
+        }
+        function restoreHold(idx) {
+            if (cart.length > 0) { toggleHoldList(); alert("Kosongkan keranjang saat ini terlebih dahulu!"); return; }
+            cart = [...heldCarts[idx].items]; 
+            heldCarts.splice(idx, 1); updateHoldBadge(); toggleHoldList(); updateCartUI();
+            toggleCartDrawer(); 
+        }
+
+        // ==========================================
+        // 6b. SCAN BARCODE VIA KAMERA HP
+        // Prioritas: native BarcodeDetector API (Chrome/Android, tanpa library
+        // tambahan). Kalau tidak didukung (mis. Safari/iOS, Firefox desktop),
+        // fallback otomatis ke ZXing (dimuat lazy dari CDN hanya saat dipakai,
+        // supaya tidak membebani load awal PWA).
+        // ==========================================
+        let scanStream = null;
+        let scanRAF = null;
+        let zxingReader = null;
+        let zxingLoadPromise = null;
+
+        function loadZXing() {
+            if (window.ZXingBrowser) return Promise.resolve();
+            if (zxingLoadPromise) return zxingLoadPromise;
+            zxingLoadPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                // FIX (supply-chain): sebelumnya "@latest" — versi bisa berubah
+                // kapan saja tanpa sepengetahuan kita (termasuk kalau paket di
+                // registry-nya suatu saat disusupi), padahal script ini dimuat
+                // langsung ke halaman yang sudah login (bisa panggil endpoint
+                // /api/* dengan cookie sesi kasir yang aktif). Pin ke versi
+                // spesifik yang sudah diuji supaya perilakunya predictable.
+                script.src = 'https://unpkg.com/@zxing/browser@0.2.1/umd/zxing-browser.min.js';
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('Gagal memuat pustaka scanner'));
+                document.head.appendChild(script);
+            });
+            return zxingLoadPromise;
+        }
+
+        function onBarcodeDetected(rawValue) {
+            const kode = String(rawValue).trim();
+            const p = products.find((x) => x.barcode === kode);
+            if (!p) {
+                document.getElementById('scan-status').innerText = `Barcode "${kode}" tidak dikenali`;
+                playFeedback('beep');
+                return;
+            }
+            playFeedback('success');
+            addToCart(p);
+            closeScanModal();
+            showToast(`${p.nama} ditambahkan`);
+        }
+
+        async function openScanModal() {
+            const modal = document.getElementById('modal-scan');
+            const video = document.getElementById('scan-video');
+            const status = document.getElementById('scan-status');
+            status.innerText = 'Arahkan kamera ke barcode produk';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            try {
+                scanStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+                    audio: false,
+                });
+                video.srcObject = scanStream;
+                await video.play();
+            } catch (err) {
+                showToast('Tidak bisa mengakses kamera — cek izin kamera di browser', 'error');
+                closeScanModal();
+                return;
+            }
+
+            if ('BarcodeDetector' in window) {
+                startNativeDetector(video, status);
+            } else {
+                try {
+                    await loadZXing();
+                    startZXingDetector(video, status);
+                } catch (err) {
+                    status.innerText = 'Scanner tidak didukung di perangkat ini — ketik manual saja';
+                }
+            }
+        }
+
+        function startNativeDetector(video, status) {
+            const detector = new window.BarcodeDetector({
+                formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'],
+            });
+            const loop = async () => {
+                if (!scanStream) return; // modal sudah ditutup
+                try {
+                    const codes = await detector.detect(video);
+                    if (codes.length > 0) {
+                        onBarcodeDetected(codes[0].rawValue);
+                        return; // stop loop, onBarcodeDetected akan menutup modal
+                    }
+                } catch { /* frame belum siap / video belum ada gambar, abaikan & coba lagi */ }
+                scanRAF = requestAnimationFrame(loop);
+            };
+            scanRAF = requestAnimationFrame(loop);
+        }
+
+        function startZXingDetector(video, status) {
+            // decodeFromVideoElement mencoba berulang kali secara internal sampai
+            // barcode ditemukan (atau reader di-reset lewat closeScanModal), jadi
+            // cukup satu panggilan — tidak perlu loop manual seperti native detector.
+            const { BrowserMultiFormatReader } = window.ZXingBrowser;
+            zxingReader = new BrowserMultiFormatReader();
+            zxingReader
+                .decodeFromVideoElement(video)
+                .then((result) => { if (result) onBarcodeDetected(result.getText()); })
+                .catch(() => { /* reader di-reset saat modal ditutup — bukan error, abaikan */ });
+        }
+
+        function closeScanModal() {
+            const modal = document.getElementById('modal-scan');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+
+            if (scanRAF) { cancelAnimationFrame(scanRAF); scanRAF = null; }
+            if (zxingReader) { try { zxingReader.reset(); } catch {} zxingReader = null; }
+            if (scanStream) { scanStream.getTracks().forEach((t) => t.stop()); scanStream = null; }
+
+            const video = document.getElementById('scan-video');
+            if (video) video.srcObject = null;
+        }
+
+        // ==========================================
+        // 7. UTILS & EVENT LISTENERS
+        // ==========================================
+        // Ikon wifi di header sekarang MURNI indikator (dari navigator.onLine +
+        // event 'online'/'offline' asli browser), bukan toggle simulasi lagi.
+        // Tetap bisa di-tap untuk memicu percobaan sync manual sekarang juga
+        // (berguna kalau kasir yakin internet sudah pulih tapi backoff belum
+        // habis -- lihat syncBackoffMs di syncOfflineData).
+        function updateNetworkBadge() {
+            const btn = document.getElementById('btn-network');
+            if (!btn) return;
+            if (navigator.onLine) {
+                btn.classList.remove('bg-red-500', 'shadow-red-500/30');
+                btn.classList.add('bg-green-500', 'shadow-green-500/30');
+                btn.innerHTML = '<i class="fas fa-wifi"></i>';
+            } else {
+                btn.classList.remove('bg-green-500', 'shadow-green-500/30');
+                btn.classList.add('bg-red-500', 'shadow-red-500/30');
+                btn.innerHTML = '<i class="fas fa-wifi-slash"></i>';
+            }
+        }
+
+        function manualRetrySync() {
+            if (!navigator.onLine) {
+                showToast('Belum ada koneksi internet — coba lagi nanti', 'warning');
+                return;
+            }
+            // Lewati backoff yang sedang berjalan (kasir tahu lebih baik dari
+            // timer kalau internetnya baru saja pulih) dengan reset manual.
+            nextSyncAllowedAt = 0;
+            checkOfflineQueue();
+        }
+
+        window.addEventListener('online', () => { updateNetworkBadge(); checkOfflineQueue(); });
+        window.addEventListener('offline', () => { updateNetworkBadge(); checkOfflineQueue(); });
+
+        document.getElementById('search-input').addEventListener('input', (e) => renderProducts(e.target.value));
+        
+        let barcodeBuf = ''; let barcodeTimer;
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT') {
+                if(e.key === 'Enter' && e.target.id === 'search-input' && e.target.value) {
+                    const q = e.target.value.trim();
+                    const p = products.find(x => x.barcode === q);
+                    if(p) { addToCart(p); e.target.value=''; e.target.blur(); renderProducts();}
+                }
+                return;
+            }
+            if (e.key === 'Enter' && barcodeBuf.length > 3) {
+                const p = products.find(x => x.barcode === barcodeBuf.trim());
+                if(p) addToCart(p);
+                barcodeBuf = ''; e.preventDefault();
+            } else if (e.key.length === 1) {
+                barcodeBuf += e.key;
+                clearTimeout(barcodeTimer);
+                barcodeTimer = setTimeout(() => barcodeBuf = '', 50);
+            }
+        });
+
+        // INIT APP
+        window.onload = async () => {
+            loadAppTitle(); // tidak perlu ditunggu (await) — non-blocking, boleh gagal diam-diam
+            const authOk = await checkAuth(); // redirect ke login.html jika sesi tidak valid
+            if (!authOk) return;
+
+            await loadTokoInfo();    // Nama & alamat toko untuk kop struk
+            await initDB();          // Init database lokal (IndexedDB, antrian offline)
+            updateNetworkBadge();    // Set ikon wifi header sesuai navigator.onLine saat load pertama
+            await loadProducts();    // Ambil produk asli dari /api/produk
+            await checkShiftStatus(); // Tampilkan modal wajib buka shift (khusus role kasir) jika belum ada shift aktif
+
+            // Retry periodik untuk antrian offline -- tanpa ini, transaksi yang
+            // gagal sync & sedang menunggu backoff (lihat syncOfflineData) baru
+            // dicoba lagi kalau kasir kebetulan melakukan aksi lain yang memicu
+            // checkOfflineQueue(). Kalau kasir diam saja (mis. lagi nunggu
+            // pembeli) selagi internet toko pulih sendiri, antrian bisa nyangkut
+            // lama tanpa ada yang memicu retry. checkOfflineQueue() sendiri sudah
+            // aman dipanggil sesering apapun -- syncOfflineData() di dalamnya
+            // no-op kalau belum lewat waktu backoff atau sedang tidak ada antrian.
+            setInterval(checkOfflineQueue, 30000);
+        };
+    </script>
+    <script>
+        // Registrasi Service Worker untuk app-shell offline (PWA)
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("sw.js").catch((err) => {
+                    console.warn("Gagal mendaftarkan service worker:", err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
+
+

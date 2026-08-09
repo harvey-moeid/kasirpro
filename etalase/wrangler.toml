@@ -1,0 +1,66 @@
+name = "etalasepro"
+main = "src/index.ts"
+compatibility_date = "2024-09-25"
+compatibility_flags = ["nodejs_compat"]
+
+# Static assets (storefront + admin) di-serve langsung oleh Worker.
+# Semua isi folder ./public jadi static assets; request yang tidak match file
+# statis akan diteruskan ke Worker (fetch handler di src/index.ts) untuk /api/*.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# ==========================================================
+# Database D1 — SENGAJA sama persis dengan database_id milik project
+# "kasire" (lihat kasire/wrangler.toml). Ini SATU database fisik BARU
+# yang dipakai bersama oleh 2 Worker/domain: kasire menulis produk &
+# stok, etalase cuma membaca.
+#
+# JANGAN jalankan `wrangler d1 create` lagi di sini — database sudah
+# dibuat sekali dari folder kasire. Cukup salin database_id yang SAMA
+# dari kasire/wrangler.toml ke bawah ini.
+# ==========================================================
+[[d1_databases]]
+binding = "DB"
+database_name = "kasirpro"
+database_id = "8c615557-4b54-4014-ab9d-c5a2390acf7d"
+migrations_dir = "./migrations"
+
+# R2 bucket SEKARANG DIGABUNG jadi 1 dengan kasire (dulu 2 bucket
+# terpisah). etalase HANYA MEMBACA dari bucket ini (serve GET /images/:key
+# untuk galeri/logo/banner) — semua UPLOAD (termasuk galeri/logo/banner)
+# sekarang lewat panel admin kasire, ditulis ke bucket yang SAMA. Key R2
+# tidak akan tabrakan: kasire pakai prefix "produk/", aset etalase (yang
+# dulu diupload lewat sini) pakai prefix "etalase/" atau "products/" (key
+# lama sebelum penggabungan, masih valid & tetap bisa dibaca).
+#
+# database_id kasire & etalase sudah sama sejak awal (1 D1 dipakai
+# bersama) — sekarang bucket_name juga disamakan (1 R2 dipakai bersama).
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "kasirpro"
+
+[vars]
+ENVIRONMENT = "production"
+
+# toko_id di tabel `toko` (milik kasire) yang produknya ditampilkan di
+# web etalase ini. Cek dulu id yang benar (setelah migrasi jalan):
+#   wrangler d1 execute kasire --remote --command="SELECT id, nama FROM toko"
+# lalu sesuaikan angka di bawah ini (dan juga isi store_settings.toko_id
+# lewat panel admin KASIRE, bagian Etalase Online, atau SQL langsung —
+# harus SAMA dengan angka ini).
+STORE_TOKO_ID = "1"
+
+# ROUTES — etalase pegang SELURUH domain (root), KECUALI /kasir/* yang
+# ditangani Worker kasire (lihat kasire/wrangler.toml). Cloudflare otomatis
+# memilih pattern paling spesifik, jadi /kasir/* tetap jatuh ke kasire
+# meskipun etalase punya catch-all "/*" di sini — tidak saling tabrakan.
+#
+# PRASYARAT SAMA dengan kasire: domain harus jadi zone aktif di Cloudflare
+# (bukan cuma "custom domain" ala Workers) supaya path-based routing bisa
+# dipakai. Ganti "domainanda.com" di bawah dengan domain asli Anda (harus
+# SAMA PERSIS dengan yang dipakai di kasire/wrangler.toml).
+routes = [
+  { pattern = "domainanda.com/*", zone_name = "domainanda.com" }
+]

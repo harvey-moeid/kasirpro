@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================
+   Tema Premium Gelap + Emas -- lapisan dasar (di luar utility Tailwind).
+   Konsisten dengan token warna di etalase/public/css/style.css supaya
+   kasire & etalase terasa 1 keluarga visual.
+   ========================================================== */
+html, body {
+  background-color: #05091c; /* ink-950 */
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+h1, h2, h3, .font-display {
+  font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Scrollbar tipis bernuansa emas redup -- detail kecil yang ikut menjaga
+   kesan premium bahkan di elemen non-desain seperti scrollbar. */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(194, 147, 46, 0.35);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(194, 147, 46, 0.55); }
+* { scrollbar-color: rgba(194, 147, 46, 0.35) transparent; scrollbar-width: thin; }
+
+/* Focus ring emas -- selaras dengan aksen premium, menggantikan ring biru
+   default browser di elemen yang belum eksplisit diberi style focus. */
+:focus-visible {
+  outline: 2px solid #c2932e;
+  outline-offset: 2px;
+}

@@ -1,0 +1,112 @@
+name = "kasirpro"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# ==========================================================
+# Static Assets: menyajikan public/login.html, index.html, admin.html,
+# manifest.json, sw.js, dan icons dari Worker yang sama — tidak perlu setup
+# Cloudflare Pages terpisah lagi.
+#
+# CATATAN (beda dari perilaku default Cloudflare): karena `run_worker_first`
+# di bawah diaktifkan untuk /kasir/*, SEMUA request ke path itu (termasuk
+# file statis) SELALU lewat src/index.ts dulu -- bukan langsung dijawab
+# edge. Ini SENGAJA, supaya Worker bisa buang prefix "/kasir" dulu sebelum
+# mencari file yang cocok. Detail lengkap: lihat komentar run_worker_first
+# di bawah & fungsi fetch() paling bawah src/index.ts.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+# PENTING: default Cloudflare ("auto-trailing-slash") otomatis redirect
+# /login.html -> /login (301), lalu Service Worker (sw.js) ikut redirect itu
+# saat fetch() dan mencoba pakai response hasil redirect itu untuk menjawab
+# request navigasi -> DIBLOKIR Chrome ("a redirected response was used for
+# a request whose redirect mode is not 'follow'"), bikin login.html gagal
+# dimuat sama sekali. App ini selalu memakai path eksplisit .html (lihat
+# manifest.json start_url & sw.js APP_SHELL), jadi tidak butuh redirect ini.
+html_handling = "none"
+
+# WAJIB — kasire sekarang hidup di path /kasir/* pada domain YANG SAMA dengan
+# etalase (lihat blok `routes` di bawah), bukan di domain sendiri lagi.
+# run_worker_first memaksa request ke /kasir/* SELALU lewat src/index.ts
+# dulu (bukan langsung dijawab edge dari [assets]), supaya Worker bisa
+# membuang prefix "/kasir" sebelum mencari file statis / route API yang
+# cocok — lihat fungsi fetch() paling bawah di src/index.ts.
+run_worker_first = ["/kasir", "/kasir/*"]
+
+# ==========================================================
+# Database D1 — BARU (deploy dari 0, TIDAK memakai database production
+# lama). DIPAKAI BERSAMA dengan project "etalase" (lihat
+# etalase/wrangler.toml, database_id di sana harus SAMA dengan di sini).
+# Kasire = pemilik/penulis data produk & stok. Etalase cuma baca.
+#
+# WAJIB dijalankan SEBELUM deploy pertama kali:
+#   npx wrangler d1 create kasire
+# lalu salin "database_id" dari hasil output ke bawah ini (ganti
+# GANTI_DENGAN_DATABASE_ID_HASIL_D1_CREATE), dan copy nilai yang SAMA
+# ke etalase/wrangler.toml.
+# ==========================================================
+[[d1_databases]]
+binding = "DB"
+database_name = "kasirpro"
+database_id = "8c615557-4b54-4014-ab9d-c5a2390acf7d"
+migrations_dir = "./migrations"
+
+# ==========================================================
+# R2 Bucket — penyimpanan foto produk, DIPAKAI BERSAMA dengan etalase
+# (galeri foto tambahan, logo, banner — lihat etalase/wrangler.toml,
+# bucket_name di sana SAMA persis dengan yang di sini). Semua upload foto
+# (produk maupun etalase) sekarang lewat panel admin kasire. BARU, bikin
+# dulu sekali sebelum deploy:
+#   npx wrangler r2 bucket create kasire
+# ==========================================================
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "kasirpro"
+
+# ==========================================================
+# Environment Variables (NON-rahasia saja boleh di sini)
+# ==========================================================
+# FIX PENTING: JWT_SECRET TIDAK BOLEH ditaruh plaintext di file ini (file ini
+# biasanya ikut ke-commit ke git). Set lewat secret, bukan [vars]:
+#
+#   wrangler secret put JWT_SECRET
+#
+# Untuk development lokal, buat file `.dev.vars` (JANGAN di-commit, sudah ada
+# di .gitignore) berisi:
+#   JWT_SECRET=rahasia-panjang-acak-untuk-development-saja
+#
+[vars]
+# Sekarang kasire & etalase 1 domain yang SAMA (kasire di /kasir/*), jadi
+# secara teknis semua request same-origin — CORS ini cuma jaring pengaman
+# untuk akses langsung ke *.workers.dev saat testing/dev, bukan kebutuhan
+# utama lagi. Boleh dibiarkan seperti ini.
+ALLOWED_ORIGIN = "https://kasire.<subdomain-workers-anda>.workers.dev" # comma-separated, sesuaikan domain Anda
+
+# Restriksi geografis (PRD Bagian 9). Set "false" saat masih testing dari luar
+# Indonesia, aktifkan ("true") saat sudah siap production.
+ENFORCE_GEO = "false"
+
+# ==========================================================
+# Optimasi penempatan edge (opsional)
+# ==========================================================
+[placement]
+mode = "smart"
+
+# ==========================================================
+# ROUTES — kasire hidup di path /kasir pada domain yang SAMA dengan
+# etalase (etalase pegang domain root, lihat etalase/wrangler.toml).
+# 2 pattern sengaja dipisah (bukan cuma "/kasir/*") karena "/kasir/*"
+# TIDAK match request ke "/kasir" persis (tanpa trailing slash) — kalau
+# cuma pakai satu pattern, /kasir tanpa slash bisa jatuh ke Worker
+# etalase (salah), bukan ke kasire.
+#
+# PRASYARAT: domain harus jadi zone aktif di akun Cloudflare Anda (DNS
+# dikelola Cloudflare) — bukan sekadar "custom domain" ala Workers biasa,
+# karena path-based routing hanya bisa lewat Route, bukan Custom Domain
+# (Custom Domain cuma bisa 1 domain = 1 worker, tidak bisa split per-path).
+# ==========================================================
+routes = [
+  { pattern = "domainanda.com/kasir", zone_name = "domainanda.com" },
+  { pattern = "domainanda.com/kasir/*", zone_name = "domainanda.com" }
+]
