@@ -2662,8 +2662,15 @@ app.get('/api/log-aktivitas', requireAuth, requireRole('super_admin', 'admin_tok
     } else {
       const tokoIdsTenant = await getTokoIdsUntukTenant(db, session.toko_pusat_id);
       if (tokoIdsTenant.length === 0) return c.json({ success: true, data: [] });
-      sql += ` AND toko_id IN (${tokoIdsTenant.map(() => '?').join(',')})`;
-      params.push(...tokoIdsTenant);
+      // FIX (MINOR): sertakan juga log dengan toko_id IS NULL (aksi super_admin
+      // level platform, mis. buat toko baru, kelola user global) — tapi HANYA
+      // yang dilakukan oleh user dari tenant yang sama, supaya log super_admin
+      // tenant A tidak bocor ke tenant B.
+      // Kondisi: toko_id IN (...toko milik tenant ini...)
+      //       OR (toko_id IS NULL AND user_id milik user tenant ini)
+      sql += ` AND (toko_id IN (${tokoIdsTenant.map(() => '?').join(',')})
+               OR (toko_id IS NULL AND user_id IN (SELECT id FROM users WHERE toko_pusat_id = ?)))`;
+      params.push(...tokoIdsTenant, session.toko_pusat_id);
     }
   }
   if (entitas) { sql += ' AND entitas = ?'; params.push(entitas); }
