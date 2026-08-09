@@ -52,17 +52,34 @@ orders.post("/", async (c) => {
     .run();
 
   // Catat produk_id per item supaya bisa hitung "X terjual" nyata per produk.
+  // FIX (integritas data): produk_id dari client WAJIB divalidasi milik
+  // STORE_TOKO_ID dulu sebelum di-insert — tanpa ini, client bisa mengirim
+  // produk_id dari toko/tenant lain dan menaikkan sold_count toko tersebut
+  // secara palsu (tampil di storefront sebagai "X terjual"). Query 1 kali
+  // untuk semua id sekaligus (IN clause), lalu whitelist yang valid saja.
   const orderId = result.meta.last_row_id;
   const withProductId = cleanItems.filter((i) => i.id);
   if (withProductId.length > 0) {
-    const stmts = withProductId.map((i) =>
-      c.env.DB.prepare(`INSERT INTO order_items (order_id, produk_id, qty) VALUES (?, ?, ?)`).bind(
-        orderId,
-        i.id,
-        i.qty
-      )
-    );
-    await c.env.DB.batch(stmts);
+    const ids = withProductId.map((i) => i.id);
+    const placeholders = ids.map(() => "?").join(",");
+    const { results: validProduk } = await c.env.DB.prepare(
+      `SELECT id FROM produk WHERE id IN (${placeholders}) AND toko_id = ? AND is_active = 1`
+    )
+      .bind(...ids, c.env.STORE_TOKO_ID)
+      .all<{ id: number }>();
+    const validIds = new Set(validProduk.map((r) => r.id));
+
+    const validItems = withProductId.filter((i) => validIds.has(i.id!));
+    if (validItems.length > 0) {
+      const stmts = validItems.map((i) =>
+        c.env.DB.prepare(`INSERT INTO order_items (order_id, produk_id, qty) VALUES (?, ?, ?)`).bind(
+          orderId,
+          i.id,
+          i.qty
+        )
+      );
+      await c.env.DB.batch(stmts);
+    }
   }
 
   return c.json({ ok: true });
