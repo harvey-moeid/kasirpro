@@ -672,8 +672,8 @@ app.post('/api/produk/:id/koreksi-stok', requireAuth, requireRole('super_admin',
     const id = Number(c.req.param('id'));
     const { jumlah, alasan } = await c.req.json<{ jumlah: number; alasan?: string }>();
 
-    if (typeof jumlah !== 'number') {
-      return c.json({ success: false, error: 'jumlah wajib berupa angka (bisa negatif untuk koreksi turun)' }, 400);
+    if (!Number.isInteger(jumlah) || jumlah === 0) {
+      return c.json({ success: false, error: 'jumlah wajib berupa bilangan bulat bukan nol (negatif untuk koreksi turun, positif untuk koreksi naik)' }, 400);
     }
 
     const check = await getProdukAtauTolak(db, id, session);
