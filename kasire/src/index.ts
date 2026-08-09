@@ -2212,15 +2212,19 @@ app.post('/api/transaksi/:id/retur', requireAuth, requireRole('super_admin', 'ad
         db.prepare(`UPDATE produk SET stok = stok + ?, updated_at = datetime('now') WHERE id = ?`).bind(qtyRetur, detail.produk_id)
       );
 
-      const produk = await db.prepare('SELECT stok FROM produk WHERE id = ?').bind(detail.produk_id).first<any>();
-      const stokSebelum = produk?.stok ?? 0; // hanya untuk snapshot audit riwayat_stok, BUKAN sumber kebenaran stok final
+      // FIX (audit trail akurat): JANGAN pre-read stok sebelum batch,
+      // karena nilai yang dibaca bisa basi kalau ada request concurrent.
+      // Pakai INSERT...SELECT langsung dari tabel produk — karena batch D1
+      // mengeksekusi statement berurutan dalam 1 transaksi, SELECT ini berjalan
+      // SETELAH UPDATE produk di atas, sehingga stok_sesudah = nilai aktual
+      // post-retur dan stok_sebelum = stok - qty (dihitung mundur, tepat).
       statements.push(
         db
           .prepare(
             `INSERT INTO riwayat_stok (produk_id, jenis, jumlah, stok_sebelum, stok_sesudah, referensi, user_id)
-             VALUES (?, 'masuk', ?, ?, ?, ?, ?)`
+             SELECT ?, 'masuk', ?, stok - ?, stok, ?, ? FROM produk WHERE id = ?`
           )
-          .bind(detail.produk_id, qtyRetur, stokSebelum, stokSebelum + qtyRetur, `Retur ${trx.kode_transaksi}`, session.uid)
+          .bind(detail.produk_id, qtyRetur, qtyRetur, `Retur ${trx.kode_transaksi}`, session.uid, detail.produk_id)
       );
     }
     statements.push(db.prepare('UPDATE transaksi SET total_bayar = total_bayar - ? WHERE id = ?').bind(totalRetur, id));
