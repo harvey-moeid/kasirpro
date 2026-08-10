@@ -2086,9 +2086,18 @@ async function exportLaporanExcel() {
         const wb = XLSX.utils.book_new();
 
         // Sheet 1: Transaksi
+        // BUG 2 FIX: tambah kolom Kasir (field kasir_nama sudah ada dari API)
+        // BUG 5 FIX: format tanggal ke WIB (+7) supaya tidak tampil tanggal sebelumnya
+        //            untuk transaksi malam hari (UTC vs WIB beda 7 jam)
+        const fmtWIB = (iso) => {
+            if (!iso) return '';
+            const d = new Date(new Date(iso).getTime() + 7 * 60 * 60 * 1000);
+            return d.toISOString().replace('T', ' ').slice(0, 19) + ' WIB';
+        };
         const trxRows = trxRes.data.map(t => ({
             'Kode Transaksi': sanitizeForExcel(t.kode_transaksi),
-            'Tanggal': t.created_at,
+            'Tanggal': fmtWIB(t.created_at),
+            'Kasir': sanitizeForExcel(t.kasir_nama),
             'Total Belanja': t.total_belanja,
             'Diskon': t.diskon,
             'Pajak': t.pajak,
@@ -2111,32 +2120,43 @@ async function exportLaporanExcel() {
         XLSX.utils.book_append_sheet(wb, wsTerlaris, 'Produk Terlaris');
 
         // Sheet 3: Stok Menipis
+        // BUG 4 FIX: tambah kolom Toko (API sekarang return nama_toko via JOIN)
+        //            dan sanitize satuan karena merupakan input bebas dari admin
         const stokRows = stokRes.data.map(p => ({
+            'Toko': sanitizeForExcel(p.nama_toko),
             'Kode Produk': sanitizeForExcel(p.kode_produk),
             'Nama': sanitizeForExcel(p.nama),
             'Stok': p.stok,
-            'Satuan': p.satuan,
+            'Satuan': sanitizeForExcel(p.satuan),
         }));
         const wsStok = XLSX.utils.json_to_sheet(stokRows.length ? stokRows : [{ Info: 'Tidak ada stok menipis' }]);
         XLSX.utils.book_append_sheet(wb, wsStok, 'Stok Menipis');
 
-        // Sheet 4: Laporan Laba (ringkasan + rincian per produk)
+        // Sheet 4: Laporan Laba
+        // BUG 1 FIX: JANGAN pakai json_to_sheet untuk sheet ini — karena
+        // ringkasan (key: Info/Nilai) dan rincian produk (key: Produk/Qty/...)
+        // punya key yang berbeda, json_to_sheet akan cetak 7 kolom dimana
+        // ringkasan hanya isi kolom A-B dan produk hanya isi kolom C-G di
+        // baris yang sama — hasilnya kacau di Excel. Pakai aoa_to_sheet
+        // (array of arrays) untuk kontrol penuh atas tata letak sheet.
         const labaRingkasan = labaRes.data.ringkasan;
-        const labaRows = [
-            { Info: 'Omzet', Nilai: labaRingkasan.omzet },
-            { Info: 'HPP', Nilai: labaRingkasan.hpp },
-            { Info: 'Laba Kotor', Nilai: labaRingkasan.laba_kotor },
-            { Info: 'Margin (%)', Nilai: labaRingkasan.margin_persen },
-            {},
-            ...labaRes.data.produk.map(p => ({
-                Produk: sanitizeForExcel(p.nama_produk),
-                Qty: p.total_qty,
-                Omzet: p.omzet,
-                HPP: p.hpp,
-                'Laba Kotor': p.laba_kotor,
-            })),
+        const labaAoa = [
+            ['RINGKASAN LABA'],
+            ['Omzet', 'HPP', 'Laba Kotor', 'Margin (%)'],
+            [labaRingkasan.omzet, labaRingkasan.hpp, labaRingkasan.laba_kotor, labaRingkasan.margin_persen],
+            [],
+            ['RINCIAN PER PRODUK'],
+            ['Produk', 'Qty Terjual', 'Omzet', 'HPP', 'Laba Kotor'],
+            ...labaRes.data.produk.map(p => [
+                sanitizeForExcel(p.nama_produk),
+                p.total_qty,
+                p.omzet,
+                p.hpp,
+                p.laba_kotor,
+            ]),
         ];
-        const wsLaba = XLSX.utils.json_to_sheet(labaRows.length ? labaRows : [{ Info: 'Tidak ada data' }]);
+        if (labaRes.data.produk.length === 0) labaAoa.push(['Tidak ada data']);
+        const wsLaba = XLSX.utils.aoa_to_sheet(labaAoa);
         XLSX.utils.book_append_sheet(wb, wsLaba, 'Laba');
 
         const namaFile = `Laporan-Kasir-${dari || 'semua'}_sd_${sampai || 'sekarang'}.xlsx`;

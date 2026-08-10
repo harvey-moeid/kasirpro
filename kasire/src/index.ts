@@ -2299,7 +2299,10 @@ app.get('/api/laporan/harian', requireAuth, async (c) => {
 app.get('/api/laporan/produk-terlaris', requireAuth, async (c) => {
   const db = c.env.DB;
   const session = c.get('session');
-  const { dari, sampai, limit = '10' } = c.req.query();
+  const { dari, sampai } = c.req.query();
+  // Validasi limit: default 10, min 1, max 200 — cegah client kirim limit=999999
+  // yang memaksa full-table scan tanpa batas.
+  const limitNum = Math.min(Math.max(Number(c.req.query('limit') ?? 10) || 10, 1), 200);
 
   let sql = `
     SELECT dt.produk_id, dt.nama_produk,
@@ -2323,7 +2326,7 @@ app.get('/api/laporan/produk-terlaris', requireAuth, async (c) => {
   }
 
   sql += ' GROUP BY dt.produk_id ORDER BY total_qty DESC LIMIT ?';
-  params.push(Number(limit));
+  params.push(limitNum);
 
   const { results } = await db.prepare(sql).bind(...params).all();
   return c.json({ success: true, data: results });
@@ -2440,21 +2443,28 @@ app.get('/api/laporan/tren-penjualan', requireAuth, async (c) => {
 app.get('/api/laporan/stok-menipis', requireAuth, async (c) => {
   const db = c.env.DB;
   const session = c.get('session');
-  const ambang = Number(c.req.query('ambang') ?? 10);
+  // Validasi ambang: default 10, min 0, cegah NaN dari input non-angka.
+  const ambang = Math.max(Number(c.req.query('ambang') ?? 10) || 10, 0);
 
-  let sql = 'SELECT * FROM produk WHERE is_active = 1 AND stok <= ?';
+  // JOIN toko supaya nama_toko tersedia di hasil — berguna untuk super_admin
+  // yang punya banyak cabang agar tahu stok menipis dari toko mana di Excel.
+  let sql = `
+    SELECT p.*, tk.nama as nama_toko
+    FROM produk p
+    JOIN toko tk ON tk.id = p.toko_id
+    WHERE p.is_active = 1 AND p.stok <= ?`;
   const params: any[] = [ambang];
 
   if (session.role !== 'super_admin') {
-    sql += ' AND toko_id = ?';
+    sql += ' AND p.toko_id = ?';
     params.push(session.toko_id);
   } else {
     const tokoIds = await getTokoIdsUntukTenant(db, session.toko_pusat_id);
     if (tokoIds.length === 0) return c.json({ success: true, data: [] });
-    sql += ` AND toko_id IN (${tokoIds.map(() => '?').join(',')})`;
+    sql += ` AND p.toko_id IN (${tokoIds.map(() => '?').join(',')})`;
     params.push(...tokoIds);
   }
-  sql += ' ORDER BY stok ASC';
+  sql += ' ORDER BY p.stok ASC';
 
   const { results } = await db.prepare(sql).bind(...params).all();
   return c.json({ success: true, data: results });
