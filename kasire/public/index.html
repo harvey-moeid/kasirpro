@@ -21,184 +21,431 @@
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
+        /* ============================================================
+           KASIR PRO — PREMIUM MOBILE UI v2
+           Target: Top 10 dari 80 POS app
+           ============================================================ */
         :root {
             --safe-top: env(safe-area-inset-top, 0px);
             --safe-bottom: env(safe-area-inset-bottom, 0px);
-            --navy-900: #0a1228;
+            --gold: #d6ac42;
+            --gold-dim: #c2932e;
+            --gold-deep: #a17423;
+            --ink-950: #05091c;
+            --ink-900: #0d1530;
+            --ink-800: #17213f;
+            --ink-700: #232d50;
         }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f3f4f9;
+            background-color: var(--ink-950);
             -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            -webkit-user-select: none;
+            user-select: none; -webkit-user-select: none;
             overflow: hidden;
             padding-top: var(--safe-top);
-            /* Override class h-screen (height:100vh) bawaan Tailwind di elemen ini —
-               100vh di mobile browser dihitung dari viewport maksimum (address bar
-               disembunyikan), bukan area yang benar-benar terlihat, sehingga elemen
-               absolute yang menempel ke body (mis. #floating-cart) bisa terdorong
-               ke luar layar & perlu discroll. 100dvh mengikuti viewport aktual. */
             height: 100dvh;
         }
         h1, h2, h3, .font-display { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; }
 
-        /* Header navy dengan gradasi + garis emas tipis di bawah */
+        /* ===== HEADER PREMIUM ===== */
         .header-navy {
-            background: linear-gradient(135deg, #16244d 0%, #1c2f61 55%, #223a78 100%);
+            background: linear-gradient(150deg, #0b1428 0%, #111e40 45%, #172455 100%);
             position: relative;
+            overflow: hidden;
+        }
+        .header-navy::before {
+            content: "";
+            position: absolute; inset: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse at 88% -20%, rgba(214,172,66,.18) 0%, transparent 55%),
+                radial-gradient(ellipse at -8% 130%, rgba(59,130,246,.07) 0%, transparent 55%);
         }
         .header-navy::after {
             content: "";
-            position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
-            background: linear-gradient(90deg, transparent, #d6ac42 25%, #f0dc93 50%, #d6ac42 75%, transparent);
-            opacity: .8;
-        }
-        .accent-gold { color: #c2932e; }
-        .btn-gold {
-            background: linear-gradient(135deg, #d6ac42, #a17423);
-            box-shadow: 0 8px 20px -6px rgba(162,116,35,0.55);
-        }
-        .card-hover { transition: transform .15s ease, box-shadow .15s ease; }
-        @media (hover:hover) {
-            .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -12px rgba(10,18,40,.25); }
+            position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(214,172,66,.2) 15%,
+                rgba(240,220,147,.95) 50%,
+                rgba(214,172,66,.2) 85%,
+                transparent 100%);
         }
 
-        /* ============================================================
-           SHELL LAYOUT (semua ukuran layar). FIX SCROLL: aturan ini
-           sebelumnya cuma ada di dalam media query (min-width:1024px),
-           jadi di HP #app-col cuma <div> polos tanpa tinggi/flex sama
-           sekali. Akibatnya <main class="flex-1 overflow-y-auto"> tidak
-           punya parent flex + tinggi terbatas, overflow-y-auto-nya tidak
-           pernah aktif, dan karena body{overflow:hidden} juga mengunci
-           scroll di level halaman, area produk jadi TIDAK BISA discroll
-           di HP. Memindahkan aturan ke luar media query mengunci tinggi
-           shell di semua ukuran layar, jadi <main> bisa scroll internal.
-           ============================================================ */
-        /* height:100vh di mobile browser dihitung dari viewport MAKSIMUM (seolah
-           address bar disembunyikan), bukan viewport yang benar-benar terlihat
-           saat address bar masih tampil — akibatnya elemen di bagian bawah
-           (floating-cart) terdorong ke luar layar & perlu discroll. 100dvh
-           (dynamic viewport height) mengikuti ukuran viewport aktual yang
-           terlihat. Baris 100vh dipertahankan sebagai fallback untuk browser
-           lama yang belum dukung dvh (akan langsung di-override kalau didukung). */
-        #app-col { display: flex; flex-direction: column; height: 100vh; height: 100dvh; flex: 1 1 auto; min-width: 0; }
-        #main-shell { display: flex; flex-direction: row; height: 100vh; height: 100dvh; width: 100vw; }
+        /* ===== SEARCH GLASS ===== */
+        .search-glass {
+            background: rgba(255,255,255,.07) !important;
+            border: 1px solid rgba(255,255,255,.1) !important;
+            color: rgba(255,255,255,.9) !important;
+            transition: border-color .2s, box-shadow .2s, background .2s;
+        }
+        .search-glass:focus {
+            background: rgba(255,255,255,.1) !important;
+            border-color: rgba(214,172,66,.5) !important;
+            box-shadow: 0 0 0 3px rgba(214,172,66,.1) !important;
+            outline: none !important;
+        }
+        .search-glass::placeholder { color: rgba(255,255,255,.3) !important; }
 
-        /* ============================================================
-           DESKTOP LAYOUT (>=1024px) — keranjang jadi panel statis di
-           kanan, area produk lebih lega dengan kolom lebih banyak.
-           Struktur & ID tidak berubah, hanya perilaku tampilan.
-           ============================================================ */
-        @media (min-width: 1024px) {
-            #floating-cart { display: none !important; }
-            #cart-drawer-bg { display: none !important; }
+        /* ===== HEADER ICON BUTTONS ===== */
+        .hdr-btn {
+            background: rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.07);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            transition: background .18s, transform .15s;
+        }
+        .hdr-btn:active { background: rgba(255,255,255,.15); transform: scale(.90); }
 
-            #cart-drawer {
-                position: static !important;
-                transform: none !important;
-                height: 100vh !important;
-                width: 400px;
-                max-width: 400px;
-                flex-shrink: 0;
-                border-radius: 0 !important;
-                box-shadow: -12px 0 30px -18px rgba(10,18,40,.35);
-                border-left: 1px solid #e6e9f2;
+        /* ===== NETWORK BADGE ===== */
+        .net-online {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            box-shadow: 0 4px 14px -3px rgba(16,185,129,.55) !important;
+            animation: net-pulse 2.8s ease-in-out infinite;
+        }
+        .net-offline {
+            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+            box-shadow: 0 4px 14px -3px rgba(239,68,68,.45) !important;
+        }
+        @keyframes net-pulse {
+            0%,100% { box-shadow: 0 4px 14px -3px rgba(16,185,129,.55); }
+            50%      { box-shadow: 0 4px 22px -1px rgba(16,185,129,.75); }
+        }
+
+        /* ===== CATEGORY PILLS ===== */
+        .cat-pill {
+            padding: 7px 15px;
+            border-radius: 100px;
+            font-size: 11.5px; font-weight: 700;
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,.07);
+            background: rgba(255,255,255,.04);
+            color: rgba(255,255,255,.45);
+            transition: all .22s cubic-bezier(.34,1.56,.64,1);
+            letter-spacing: .01em;
+        }
+        .cat-pill.cat-active {
+            background: linear-gradient(135deg, rgba(214,172,66,.18), rgba(161,116,35,.12));
+            border-color: rgba(214,172,66,.55);
+            color: #e8c55a;
+            box-shadow: 0 0 20px -5px rgba(214,172,66,.35), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        .cat-pill:active { transform: scale(.93); }
+
+        /* ===== PRODUCT CARD PREMIUM ===== */
+        .prod-card {
+            background: linear-gradient(160deg, #101d42 0%, #0c1636 100%);
+            border: 1px solid rgba(255,255,255,.057);
+            border-radius: 18px;
+            padding: 10px;
+            position: relative; overflow: hidden;
+            cursor: pointer;
+            transition: transform .15s cubic-bezier(.34,1.56,.64,1),
+                        box-shadow .2s ease,
+                        border-color .2s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            display: flex; flex-direction: column;
+        }
+        .prod-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent 5%, rgba(255,255,255,.1) 50%, transparent 95%);
+        }
+        .prod-card:active {
+            transform: scale(.91);
+            border-color: rgba(214,172,66,.22);
+            box-shadow: 0 4px 20px -6px rgba(214,172,66,.2);
+        }
+        @media (hover: hover) {
+            .prod-card:hover {
+                border-color: rgba(214,172,66,.18);
+                box-shadow: 0 8px 30px -10px rgba(214,172,66,.2);
+                transform: translateY(-2px);
             }
+        }
+        .prod-card.sold-out { opacity: .52; filter: grayscale(.25); }
 
-            #product-grid { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
+        /* Image wrapper */
+        .prod-img-wrap {
+            position: relative; width: 100%; aspect-ratio: 1/1;
+            border-radius: 12px; overflow: hidden;
+            margin-bottom: 8px; background: #081026;
         }
-        @media (min-width: 1440px) {
-            #product-grid { grid-template-columns: repeat(5, minmax(0,1fr)) !important; }
+        .prod-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .prod-img-wrap::after {
+            content: ''; position: absolute;
+            bottom: 0; left: 0; right: 0; height: 35%;
+            background: linear-gradient(to top, rgba(5,9,28,.45), transparent);
+            pointer-events: none;
         }
-        .pb-safe { padding-bottom: calc(1rem + var(--safe-bottom)); }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        
+
+        /* Stock badge */
+        .stk-badge {
+            position: absolute; top: 7px; right: 7px;
+            font-size: 9px; font-weight: 800;
+            padding: 2px 7px; border-radius: 100px;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            letter-spacing: .02em; z-index: 2;
+            border: 1px solid rgba(255,255,255,.14);
+        }
+        .stk-ok  { background: rgba(255,255,255,.87); color: #1944b8; }
+        .stk-low { background: rgba(251,191,36,.85);  color: #7c2d12; }
+        .stk-out { background: rgba(239,68,68,.85);   color: #fff;    }
+
+        /* Product name & price */
+        .prod-name {
+            font-size: 11px; font-weight: 700;
+            color: rgba(222,218,238,.9); line-height: 1.35;
+            display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+            margin-bottom: 5px;
+        }
+        .prod-price {
+            font-size: 13px; font-weight: 800;
+            background: linear-gradient(135deg, #e8c55a 0%, #c2932e 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-top: auto; line-height: 1;
+        }
+
+        /* ===== SKELETON LOADING ===== */
+        @keyframes shimmer {
+            0%   { background-position: -500px 0; }
+            100% { background-position: 500px 0; }
+        }
+        .skel {
+            background: linear-gradient(90deg,
+                rgba(255,255,255,.03) 25%,
+                rgba(255,255,255,.08) 50%,
+                rgba(255,255,255,.03) 75%);
+            background-size: 500px 100%;
+            animation: shimmer 1.6s ease-in-out infinite;
+            border-radius: 8px;
+        }
+        .skel-card {
+            background: linear-gradient(160deg, #101d42, #0c1636);
+            border: 1px solid rgba(255,255,255,.05);
+            border-radius: 18px; padding: 10px; overflow: hidden;
+        }
+        .skel-img  { aspect-ratio: 1/1; border-radius: 12px; margin-bottom: 8px; }
+        .skel-r1 { height: 11px; width: 82%; margin-bottom: 5px; }
+        .skel-r2 { height: 11px; width: 58%; margin-bottom: 5px; }
+        .skel-r3 { height: 14px; width: 48%; margin-top: 3px; }
+
+        /* ===== FLOATING CART ===== */
+        #floating-cart {
+            background: linear-gradient(135deg, #16244d 0%, #0d1630 100%) !important;
+            border: 1px solid rgba(214,172,66,.22) !important;
+            border-radius: 20px !important;
+            box-shadow:
+                0 -1px 0 rgba(214,172,66,.12) inset,
+                0 22px 60px -10px rgba(0,0,0,.85),
+                0 4px 24px -4px rgba(214,172,66,.12) !important;
+        }
+
+        /* ===== CART DRAWER ===== */
+        #cart-drawer { background: #070e22 !important; }
+
+        /* Cart item */
+        .cart-item {
+            display: flex; align-items: center; gap: 11px;
+            background: rgba(16,26,55,.65);
+            border: 1px solid rgba(255,255,255,.05);
+            border-radius: 15px; padding: 11px 11px;
+            margin-bottom: 8px; transition: background .2s;
+        }
+
+        /* QTY stepper */
+        .qty-stepper {
+            display: flex; align-items: center; gap: 4px;
+            background: rgba(5,9,28,.7);
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 11px; padding: 4px 5px;
+        }
+        .qty-btn {
+            width: 26px; height: 26px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,.07);
+            border-radius: 7px;
+            color: rgba(255,255,255,.65);
+            transition: background .15s, transform .15s;
+            touch-action: manipulation;
+        }
+        .qty-btn:active {
+            background: rgba(214,172,66,.2);
+            color: #d6ac42; transform: scale(.88);
+        }
+        .qty-num {
+            min-width: 24px; text-align: center;
+            font-size: 13px; font-weight: 800;
+            color: rgba(255,255,255,.88);
+            cursor: pointer; padding: 0 3px;
+        }
+
+        /* Payment pills */
+        .pay-pill {
+            transition: all .2s cubic-bezier(.34,1.56,.64,1);
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 13px; padding: 10px 4px 8px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 5px;
+            color: rgba(255,255,255,.42);
+            font-size: 10px; font-weight: 800;
+            cursor: pointer; touch-action: manipulation;
+        }
+        .pay-pill i { font-size: 15px; }
+        .pay-pill:active { transform: scale(.90); }
+        .pay-pill.pay-active {
+            background: rgba(214,172,66,.13);
+            border-color: rgba(214,172,66,.5);
+            color: #d6ac42;
+            box-shadow: 0 4px 16px -5px rgba(214,172,66,.3);
+        }
+
+        /* ===== GOLD BUTTON ===== */
+        .btn-gold {
+            background: linear-gradient(135deg, #d6ac42 0%, #b88a24 55%, #a17423 100%);
+            box-shadow: 0 8px 26px -6px rgba(162,116,35,.65),
+                        inset 0 1px 0 rgba(255,255,255,.18);
+            position: relative; overflow: hidden;
+            transition: transform .15s, box-shadow .15s;
+        }
+        .btn-gold::after {
+            content: ''; position: absolute;
+            top: 0; left: -100%; width: 60%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+            transition: left .5s ease;
+        }
+        .btn-gold:not(:disabled):active {
+            transform: scale(.97);
+            box-shadow: 0 4px 14px -4px rgba(162,116,35,.4);
+        }
+        .btn-gold:not(:disabled):active::after { left: 150%; }
+        .btn-gold:disabled {
+            background: linear-gradient(135deg, #252d4a, #1c2340);
+            box-shadow: none; color: rgba(255,255,255,.25) !important;
+        }
+
+        /* ===== TOAST ===== */
+        #toast {
+            backdrop-filter: blur(14px) !important;
+            -webkit-backdrop-filter: blur(14px) !important;
+            background: rgba(7,14,34,.92) !important;
+            border: 1px solid rgba(255,255,255,.08) !important;
+            box-shadow: 0 16px 48px -8px rgba(0,0,0,.65) !important;
+        }
+
+        /* ===== MISC ===== */
+        .accent-gold { color: #c2932e; }
+        .card-hover  { transition: transform .15s ease, box-shadow .15s ease; }
+        .pb-safe     { padding-bottom: calc(1rem + var(--safe-bottom)); }
+        .font-mono   { font-family: 'JetBrains Mono', monospace; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Drawer Animations */
-        .drawer { transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
-        .drawer-open { transform: translateY(0%); }
+
+        /* ===== DRAWER ===== */
+        .drawer { transition: transform .38s cubic-bezier(.32,.72,0,1); }
+        .drawer-open  { transform: translateY(0%); }
         .drawer-closed { transform: translateY(100%); }
-        
-        @keyframes tapEffect {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(0.92); }
-        }
-        .animate-tap { animation: tapEffect 0.15s ease-out; }
-        
+
+        @keyframes tapEffect { 0%,100%{transform:scale(1)} 50%{transform:scale(.92)} }
+        .animate-tap { animation: tapEffect .15s ease-out; }
+
         @keyframes slideUpFade {
-            0% { opacity: 0; transform: translateY(30px); }
-            100% { opacity: 1; transform: translateY(0); }
+            0%   { opacity: 0; transform: translateY(26px) scale(.97); }
+            100% { opacity: 1; transform: translateY(0)    scale(1); }
         }
-        .animate-slide-up { animation: slideUpFade 0.3s ease-out forwards; }
-        
+        .animate-slide-up { animation: slideUpFade .3s cubic-bezier(.34,1.56,.64,1) forwards; }
+
         .thermal-paper {
-            background: #fff;
-            position: relative;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: #fff; position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,.1);
         }
         .thermal-paper::before {
             content: ""; position: absolute; top: -8px; left: 0; right: 0; height: 8px;
             background: radial-gradient(circle, transparent, transparent 50%, #fff 50%, #fff 100%) 0 0 / 16px 16px;
         }
-
-        /* Preview di layar (sebelum cetak) juga ikut menyesuaikan lebar kertas */
         #print-area.paper-80 { max-width: 80mm; margin: 0 auto; }
+
+        /* ===== LAYOUT SHELL ===== */
+        #app-col { display:flex; flex-direction:column; height:100vh; height:100dvh; flex:1 1 auto; min-width:0; }
+        #main-shell { display:flex; flex-direction:row; height:100vh; height:100dvh; width:100vw; }
+
+        @media (min-width:1024px) {
+            #floating-cart { display:none !important; }
+            #cart-drawer-bg { display:none !important; }
+            #cart-drawer {
+                position:static !important; transform:none !important;
+                height:100vh !important; width:400px; max-width:400px;
+                flex-shrink:0; border-radius:0 !important;
+                box-shadow: -12px 0 30px -18px rgba(10,18,40,.3);
+                border-left: 1px solid rgba(255,255,255,.05) !important;
+                border-top: none !important;
+            }
+            #product-grid { grid-template-columns:repeat(4, minmax(0,1fr)) !important; }
+        }
+        @media (min-width:1440px) {
+            #product-grid { grid-template-columns:repeat(5, minmax(0,1fr)) !important; }
+        }
     </style>
 </head>
 <body class="w-screen flex flex-col relative text-ink-50">
 <div id="main-shell">
 <div id="app-col">
     <!-- HEADER -->
-    <header class="header-navy text-white pb-4 px-4 lg:px-8 lg:pt-2 shadow-md z-20 shrink-0 rounded-b-2xl lg:rounded-b-none relative">
-        <div class="flex justify-between items-center pt-3">
+    <header class="header-navy text-white pb-4 px-4 lg:px-8 lg:pt-2 z-20 shrink-0 rounded-b-2xl lg:rounded-b-none relative" style="box-shadow:0 8px 32px -8px rgba(0,0,0,.6)">
+        <div class="flex justify-between items-center pt-3 relative z-10">
             <div class="flex items-center gap-3">
-                <div onclick="toggleAccountMenu()" title="Akun" class="w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm active:scale-95 transition cursor-pointer p-2" style="background:linear-gradient(135deg,#d6ac42,#a17423)">
+                <div onclick="toggleAccountMenu()" title="Akun" class="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer p-2" style="background:linear-gradient(135deg,#d6ac42,#a17423);box-shadow:0 4px 14px -2px rgba(162,116,35,.58),inset 0 1px 0 rgba(255,255,255,.2);transition:transform .15s" onmousedown="this.style.transform='scale(.90)'" onmouseup="this.style.transform=''" ontouchstart="this.style.transform='scale(.90)'" ontouchend="this.style.transform=''">
                     <img src="icons/mark-white.svg" alt="muidsoft" class="w-full h-full">
                 </div>
                 <div>
-                    <h1 id="app-title-header" class="font-display font-extrabold text-lg leading-tight tracking-wide">KASIR CLOUD</h1>
-                    <p class="text-[10px] text-blue-200 font-medium opacity-90" id="header-status">
-                        <i class="fas fa-circle text-[8px] text-green-400 mr-1 shadow-[0_0_5px_#4ade80]"></i>Online • JKT
+                    <div class="flex items-center gap-2">
+                        <h1 id="app-title-header" class="font-display font-extrabold text-[17px] leading-tight tracking-wide">KASIR PRO</h1>
+                        <span class="text-[8px] font-black px-1.5 py-0.5 rounded-md tracking-widest" style="background:linear-gradient(135deg,rgba(214,172,66,.2),rgba(161,116,35,.14));border:1px solid rgba(214,172,66,.42);color:#d6ac42">PRO</span>
+                    </div>
+                    <p class="text-[10px] font-medium" style="color:rgba(180,200,255,.7)" id="header-status">
+                        <i class="fas fa-circle text-[7px] text-green-400 mr-1" style="filter:drop-shadow(0 0 4px #4ade80)"></i>Online • JKT
                     </p>
                 </div>
             </div>
-            
-            <div class="flex gap-2">
-                <button id="btn-shift" onclick="openTutupShiftModal()" title="Tutup Shift" class="h-10 px-3 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center gap-1.5 active:scale-95 transition text-[11px] font-bold hidden">
+
+            <div class="flex gap-2 relative z-10">
+                <button id="btn-shift" onclick="openTutupShiftModal()" title="Tutup Shift" class="h-10 px-3 hdr-btn rounded-full flex items-center justify-center gap-1.5 text-[11px] font-bold hidden" style="color:#d6ac42">
                     <i class="fas fa-cash-register"></i> <span id="shift-badge-text">Shift</span>
                 </button>
-                <button aria-label="Transaksi ditahan" onclick="toggleHoldList()" class="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center relative active:scale-95 transition">
-                    <i class="fas fa-pause" aria-hidden="true"></i>
-                    <span id="badge-hold" class="absolute -top-1 -right-1 bg-orange-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold hidden border border-blue-600">0</span>
+                <button aria-label="Transaksi ditahan" onclick="toggleHoldList()" class="w-10 h-10 hdr-btn rounded-full flex items-center justify-center relative">
+                    <i class="fas fa-pause text-sm" aria-hidden="true" style="color:rgba(255,255,255,.7)"></i>
+                    <span id="badge-hold" class="absolute -top-1 -right-1 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold hidden" style="background:#f97316;border:2px solid #0b1428">0</span>
                 </button>
-                <button id="btn-network" aria-label="Status sinkronisasi jaringan" onclick="manualRetrySync()" class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white active:scale-95 transition shadow-lg shadow-green-500/30">
-                    <i class="fas fa-wifi" aria-hidden="true"></i>
+                <button id="btn-network" aria-label="Status jaringan" onclick="manualRetrySync()" class="w-10 h-10 rounded-full flex items-center justify-center text-white net-online" style="transition:all .3s ease">
+                    <i class="fas fa-wifi text-sm" aria-hidden="true"></i>
                 </button>
             </div>
         </div>
-        
-        <div class="mt-4 flex gap-2 items-stretch">
+
+        <div class="mt-3.5 flex gap-2 items-stretch relative z-10">
             <div class="relative flex-1">
-                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-ink-400"></i>
-                <input type="text" id="search-input" placeholder="Cari nama atau barcode..." class="w-full h-full bg-ink-900 text-ink-50 pl-11 pr-10 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 font-medium text-sm placeholder-ink-400 transition">
-                <button aria-label="Hapus pencarian" onclick="document.getElementById('search-input').value=''; renderProducts();" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-ink-400 active:text-ink-200">
+                <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style="color:rgba(255,255,255,.32)"></i>
+                <input type="text" id="search-input" placeholder="Cari produk atau barcode..."
+                       class="w-full h-full search-glass pl-10 pr-9 py-3 rounded-xl text-sm font-medium focus:outline-none">
+                <button aria-label="Hapus pencarian" onclick="document.getElementById('search-input').value=''; renderProducts();"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 active:opacity-50 transition" style="color:rgba(255,255,255,.28)">
                     <i class="fas fa-times-circle" aria-hidden="true"></i>
                 </button>
             </div>
-            <button onclick="openScanModal()" title="Scan barcode dengan kamera" class="shrink-0 w-12 bg-ink-900 text-blue-600 rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center text-lg">
+            <button onclick="openScanModal()" title="Scan barcode" class="shrink-0 w-12 hdr-btn rounded-xl flex items-center justify-center text-lg" style="color:rgba(214,172,66,.85)">
                 <i class="fas fa-barcode"></i>
             </button>
         </div>
     </header>
 
     <!-- AREA PRODUK -->
-    <main class="flex-1 overflow-y-auto hide-scroll p-4 lg:p-6 pb-32 lg:pb-8 bg-ink-950 relative">
+    <main class="flex-1 overflow-y-auto hide-scroll p-4 lg:p-6 pb-32 lg:pb-8 relative" style="background:#05091c">
         <!-- Kategori Filter -->
         <div class="flex gap-2 overflow-x-auto hide-scroll mb-4 pb-1" id="category-filters">
-            <!-- Diisi dinamis oleh renderCategoryFilters() berdasarkan data produk dari API -->
+            <!-- Diisi dinamis oleh renderCategoryFilters() -->
         </div>
 
         <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -207,21 +454,21 @@
     </main>
 
     <!-- FLOATING CART BAR -->
-    <div id="floating-cart" onclick="toggleCartDrawer()" class="absolute bottom-6 left-4 right-4 text-white p-4 rounded-2xl shadow-2xl flex justify-between items-center z-30 transform transition-all active:scale-[0.98] cursor-pointer hidden pb-safe" style="background:linear-gradient(135deg,#16244d,#1c2f61)">
+    <div id="floating-cart" onclick="toggleCartDrawer()" class="absolute bottom-6 left-4 right-4 text-white p-4 flex justify-between items-center z-30 transform transition-all active:scale-[0.97] cursor-pointer hidden pb-safe">
         <div class="flex items-center gap-3">
             <div class="relative">
-                <div class="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="fas fa-shopping-bag text-lg"></i>
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,rgba(214,172,66,.22),rgba(161,116,35,.14));border:1px solid rgba(214,172,66,.32)">
+                    <i class="fas fa-shopping-bag text-lg" style="color:#d6ac42"></i>
                 </div>
-                <span id="fc-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-ink-950">0</span>
+                <span id="fc-count" class="absolute -top-2 -right-2 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold" style="background:#ef4444;border:2px solid #05091c">0</span>
             </div>
             <div>
-                <p class="text-[10px] font-medium text-ink-300">Total Pembayaran</p>
-                <p id="fc-total" class="font-extrabold text-lg leading-none mt-0.5 accent-gold">Rp 0</p>
+                <p class="text-[10px] font-semibold" style="color:rgba(255,255,255,.4)">Total Tagihan</p>
+                <p id="fc-total" class="font-extrabold text-[18px] leading-none mt-0.5" style="background:linear-gradient(135deg,#e8c55a,#c2932e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Rp 0</p>
             </div>
         </div>
-        <div class="flex items-center gap-2 font-bold text-sm bg-white/10 active:bg-white/20 px-3 py-2 rounded-xl transition">
-            Detail <i class="fas fa-chevron-up text-[10px]"></i>
+        <div class="flex items-center gap-1.5 font-bold text-sm px-3.5 py-2.5 rounded-xl" style="background:rgba(255,255,255,.09);color:rgba(255,255,255,.8)">
+            Bayar <i class="fas fa-chevron-up text-[10px] ml-0.5"></i>
         </div>
     </div>
 
@@ -229,65 +476,80 @@
 
 
     <!-- 1. CART DRAWER -->
-    <div id="cart-drawer-bg" onclick="toggleCartDrawer()" class="fixed inset-0 bg-ink-950/60 z-40 opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm"></div>
-    <div id="cart-drawer" class="fixed bottom-0 left-0 right-0 bg-ink-900 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-50 flex flex-col h-[85vh] drawer drawer-closed">
-        
-        <div class="p-4 border-b border-ink-800 flex justify-between items-center bg-ink-900 rounded-t-3xl shrink-0">
-            <div class="flex items-center gap-3">
-                <button aria-label="Tutup keranjang" onclick="toggleCartDrawer()" class="w-8 h-8 flex items-center justify-center bg-ink-800 rounded-full active:bg-ink-700">
-                    <i class="fas fa-chevron-down text-ink-200" aria-hidden="true"></i>
-                </button>
-                <h2 class="font-extrabold text-lg">Pesanan Aktif</h2>
-            </div>
-            <div class="flex gap-2">
-                <button aria-label="Tahan transaksi" onclick="holdCart()" class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 active:bg-orange-500 active:text-white flex items-center justify-center transition"><i class="fas fa-pause" aria-hidden="true"></i></button>
-                <button aria-label="Hapus keranjang" onclick="clearCart(true)" class="w-10 h-10 rounded-xl bg-red-50 text-red-500 active:bg-red-500 active:text-white flex items-center justify-center transition"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
-            </div>
-        </div>
-        
-        <div id="cart-items" class="flex-1 overflow-y-auto hide-scroll p-4 space-y-3 bg-ink-950/50">
-            <!-- Items Rendered Here -->
+    <div id="cart-drawer-bg" onclick="toggleCartDrawer()" class="fixed inset-0 z-40 opacity-0 pointer-events-none transition-opacity duration-300" style="background:rgba(0,0,0,.65);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>
+    <div id="cart-drawer" class="fixed bottom-0 left-0 right-0 rounded-t-3xl z-50 flex flex-col h-[85vh] drawer drawer-closed" style="box-shadow:0 -14px 50px -8px rgba(0,0,0,.7)">
+
+        <!-- Drawer handle -->
+        <div class="flex justify-center pt-3 pb-1 shrink-0">
+            <div class="w-10 h-1 rounded-full" style="background:rgba(255,255,255,.15)"></div>
         </div>
 
-        <div class="p-5 bg-ink-900 border-t border-ink-800 shrink-0 pb-safe shadow-[0_-5px_15px_rgba(0,0,0,0.03)]">
-            <div class="flex justify-between text-ink-300 text-xs font-medium mb-1">
-                <span>Subtotal</span><span id="cart-subtotal">Rp 0</span>
+        <!-- Drawer header -->
+        <div class="px-4 pb-3 flex justify-between items-center shrink-0" style="border-bottom:1px solid rgba(255,255,255,.06)">
+            <div class="flex items-center gap-3">
+                <button aria-label="Tutup keranjang" onclick="toggleCartDrawer()" class="w-8 h-8 flex items-center justify-center rounded-full" style="background:rgba(255,255,255,.07)">
+                    <i class="fas fa-chevron-down text-sm" aria-hidden="true" style="color:rgba(255,255,255,.6)"></i>
+                </button>
+                <h2 class="font-extrabold text-lg" style="color:rgba(255,255,255,.92)">Pesanan Aktif</h2>
             </div>
-            <div class="flex justify-between items-center text-ink-300 text-xs font-medium mb-1">
-                <span>Diskon</span>
-                <button onclick="openDiskonModal()" id="cart-diskon-btn" class="text-red-500 font-bold active:opacity-60 transition flex items-center gap-1">
-                    <span id="cart-diskon">- Rp 0</span> <i class="fas fa-pen text-[9px] opacity-60"></i>
+            <div class="flex gap-2">
+                <button aria-label="Tahan transaksi" onclick="holdCart()" class="w-10 h-10 rounded-xl flex items-center justify-center transition" style="background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);color:#f97316" ontouchstart="this.style.background='rgba(249,115,22,.3)'" ontouchend="this.style.background='rgba(249,115,22,.1)'">
+                    <i class="fas fa-pause text-sm" aria-hidden="true"></i>
+                </button>
+                <button aria-label="Hapus keranjang" onclick="clearCart(true)" class="w-10 h-10 rounded-xl flex items-center justify-center transition" style="background:rgba(239,68,68,.09);border:1px solid rgba(239,68,68,.18);color:#ef4444" ontouchstart="this.style.background='rgba(239,68,68,.25)'" ontouchend="this.style.background='rgba(239,68,68,.09)'">
+                    <i class="fas fa-trash-alt text-sm" aria-hidden="true"></i>
                 </button>
             </div>
-            <div class="flex justify-between items-center text-ink-300 text-xs font-medium mb-3 pb-3 border-b border-ink-800">
-                <span>Pajak</span>
-                <button onclick="openPajakModal()" id="cart-pajak-btn" class="text-ink-200 font-bold active:opacity-60 transition flex items-center gap-1">
-                    <span id="cart-tax">Rp 0</span> <i class="fas fa-pen text-[9px] opacity-60"></i>
-                </button>
-            </div>
-            <div class="flex justify-between items-end mb-4">
-                <span class="text-ink-50 font-bold">Total Tagihan</span>
-                <span id="cart-total" class="font-extrabold text-2xl accent-gold font-mono">Rp 0</span>
+        </div>
+
+        <!-- Cart items -->
+        <div id="cart-items" class="flex-1 overflow-y-auto hide-scroll px-4 pt-3" style="background:rgba(5,9,28,.5)">
+            <!-- Items Rendered by JS -->
+        </div>
+
+        <!-- Summary + Payment footer -->
+        <div class="px-4 pt-4 shrink-0 pb-safe" style="background:#070e22;border-top:1px solid rgba(255,255,255,.05)">
+            <!-- Totals -->
+            <div class="rounded-2xl p-3.5 mb-3" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)">
+                <div class="flex justify-between text-xs font-semibold mb-1.5" style="color:rgba(255,255,255,.4)">
+                    <span>Subtotal</span><span id="cart-subtotal">Rp 0</span>
+                </div>
+                <div class="flex justify-between items-center text-xs font-semibold mb-1.5" style="color:rgba(255,255,255,.4)">
+                    <span>Diskon</span>
+                    <button onclick="openDiskonModal()" id="cart-diskon-btn" class="flex items-center gap-1 active:opacity-50 transition" style="color:#f87171">
+                        <span id="cart-diskon">- Rp 0</span> <i class="fas fa-pen text-[9px] opacity-60"></i>
+                    </button>
+                </div>
+                <div class="flex justify-between items-center text-xs font-semibold mb-2 pb-2" style="color:rgba(255,255,255,.4);border-bottom:1px solid rgba(255,255,255,.06)">
+                    <span>Pajak</span>
+                    <button onclick="openPajakModal()" id="cart-pajak-btn" class="flex items-center gap-1 active:opacity-50 transition" style="color:rgba(255,255,255,.5)">
+                        <span id="cart-tax">Rp 0</span> <i class="fas fa-pen text-[9px] opacity-60"></i>
+                    </button>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-bold" style="color:rgba(255,255,255,.85)">Total Tagihan</span>
+                    <span id="cart-total" class="font-extrabold text-2xl font-mono" style="background:linear-gradient(135deg,#e8c55a,#c2932e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Rp 0</span>
+                </div>
             </div>
 
             <!-- Payment Methods -->
-            <div class="grid grid-cols-4 gap-2 mb-4" id="payment-methods">
-                <button class="pay-method active py-2.5 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 font-bold flex flex-col items-center gap-1 active:scale-95 transition" data-method="cash">
-                    <i class="fas fa-money-bill-wave"></i> <span class="text-[10px]">TUNAI</span>
+            <div class="grid grid-cols-4 gap-2 mb-3" id="payment-methods">
+                <button class="pay-pill pay-method pay-active" data-method="cash">
+                    <i class="fas fa-money-bill-wave"></i><span>TUNAI</span>
                 </button>
-                <button class="pay-method py-2.5 rounded-xl border border-ink-700 text-ink-300 font-bold flex flex-col items-center gap-1 active:scale-95 transition" data-method="qris">
-                    <i class="fas fa-qrcode"></i> <span class="text-[10px]">QRIS</span>
+                <button class="pay-pill pay-method" data-method="qris">
+                    <i class="fas fa-qrcode"></i><span>QRIS</span>
                 </button>
-                <button class="pay-method py-2.5 rounded-xl border border-ink-700 text-ink-300 font-bold flex flex-col items-center gap-1 active:scale-95 transition" data-method="debit">
-                    <i class="fas fa-credit-card"></i> <span class="text-[10px]">DEBIT</span>
+                <button class="pay-pill pay-method" data-method="debit">
+                    <i class="fas fa-credit-card"></i><span>DEBIT</span>
                 </button>
-                <button class="pay-method py-2.5 rounded-xl border border-ink-700 text-ink-300 font-bold flex flex-col items-center gap-1 active:scale-95 transition" data-method="split">
-                    <i class="fas fa-layer-group"></i> <span class="text-[10px]">SPLIT</span>
+                <button class="pay-pill pay-method" data-method="split">
+                    <i class="fas fa-layer-group"></i><span>SPLIT</span>
                 </button>
             </div>
 
-            <button onclick="triggerPayment()" id="btn-pay" class="btn-gold w-full text-[#16244d] font-bold py-4 rounded-2xl active:scale-[0.98] transition flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:active:scale-100">
-                Bayar Sekarang <i class="fas fa-arrow-right"></i>
+            <button onclick="triggerPayment()" id="btn-pay" class="btn-gold w-full font-extrabold py-4 rounded-2xl flex items-center justify-center gap-2 text-base mb-1 disabled:active:scale-100" style="color:#0d1630">
+                <i class="fas fa-bolt text-sm"></i> Bayar Sekarang
             </button>
         </div>
     </div>
@@ -295,47 +557,53 @@
     </div><!-- /#main-shell -->
 
     <!-- 2. FULLSCREEN NUMPAD MODAL (CASH) -->
-    <div id="numpad-modal" class="fixed inset-0 bg-ink-900 z-[60] flex flex-col drawer drawer-closed">
-        <div class="header-navy text-white p-6 pt-10 text-center relative shrink-0">
-            <button aria-label="Batal" onclick="cancelNumpad()" class="absolute left-4 top-10 w-10 h-10 flex items-center justify-center bg-white/20 rounded-full active:bg-white/40 transition"><i class="fas fa-arrow-left" aria-hidden="true"></i></button>
-            <p class="text-xs font-medium text-blue-200 mb-1">Total Tagihan</p>
-            <h2 class="text-4xl font-extrabold font-mono accent-gold" id="numpad-tagihan">Rp 0</h2>
+    <div id="numpad-modal" class="fixed inset-0 z-[60] flex flex-col drawer drawer-closed" style="background:#05091c">
+        <!-- Header -->
+        <div class="header-navy text-white px-5 pb-5 pt-10 text-center relative shrink-0">
+            <button aria-label="Batal" onclick="cancelNumpad()" class="absolute left-4 top-10 w-10 h-10 flex items-center justify-center rounded-full hdr-btn">
+                <i class="fas fa-arrow-left" aria-hidden="true" style="color:rgba(255,255,255,.7)"></i>
+            </button>
+            <p class="text-[11px] font-semibold mb-1.5" style="color:rgba(180,200,255,.6)">Total Tagihan</p>
+            <h2 class="text-4xl font-extrabold font-mono" id="numpad-tagihan" style="background:linear-gradient(135deg,#e8c55a,#c2932e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Rp 0</h2>
         </div>
-        
-        <div class="flex-1 flex flex-col p-5 bg-ink-950 pb-safe">
-            <p class="text-[10px] font-bold text-ink-400 uppercase text-center mb-1">Uang Diterima</p>
-            <input type="text" id="input-diterima" readonly class="w-full text-center text-4xl font-extrabold text-ink-50 bg-transparent border-none focus:outline-none mb-2 font-mono h-12" placeholder="Rp 0">
-            
-            <div class="flex justify-center items-center mb-6 gap-2 bg-ink-900 py-2 rounded-xl border border-ink-700 shadow-sm">
-                <span class="text-xs font-bold text-ink-300">Kembalian:</span>
-                <span class="text-xl font-extrabold text-orange-500 font-mono" id="numpad-kembalian">Rp 0</span>
+
+        <div class="flex-1 flex flex-col p-5 pb-safe">
+            <p class="text-[10px] font-bold uppercase text-center mb-1" style="color:rgba(255,255,255,.3);letter-spacing:.08em">Uang Diterima</p>
+            <input type="text" id="input-diterima" readonly
+                   class="w-full text-center text-4xl font-extrabold bg-transparent border-none focus:outline-none mb-2 font-mono h-12"
+                   style="color:rgba(255,255,255,.92)" placeholder="Rp 0">
+
+            <div class="flex justify-center items-center mb-5 gap-2 py-2.5 rounded-2xl" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)">
+                <span class="text-xs font-bold" style="color:rgba(255,255,255,.4)">Kembalian:</span>
+                <span class="text-xl font-extrabold font-mono text-orange-400" id="numpad-kembalian">Rp 0</span>
             </div>
 
-            <div class="grid grid-cols-4 gap-2 mb-4">
-                <button class="py-3 bg-emerald-100 text-emerald-700 font-bold rounded-xl active:bg-emerald-200 active:scale-95 text-sm transition" onclick="setUangDiterima('pas')">PAS</button>
-                <button class="py-3 bg-ink-900 border border-ink-700 text-ink-100 font-bold rounded-xl active:bg-ink-800 active:scale-95 text-sm transition" onclick="addUang(20000)">20K</button>
-                <button class="py-3 bg-ink-900 border border-ink-700 text-ink-100 font-bold rounded-xl active:bg-ink-800 active:scale-95 text-sm transition" onclick="addUang(50000)">50K</button>
-                <button class="py-3 bg-ink-900 border border-ink-700 text-ink-100 font-bold rounded-xl active:bg-ink-800 active:scale-95 text-sm transition" onclick="addUang(100000)">100K</button>
+            <!-- Quick amounts -->
+            <div class="grid grid-cols-4 gap-2 mb-3">
+                <button class="py-3 rounded-xl font-bold text-sm active:scale-95 transition" style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);color:#34d399" onclick="setUangDiterima('pas')">PAS</button>
+                <button class="py-3 rounded-xl font-bold text-sm active:scale-95 transition" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.75)" onclick="addUang(20000)">20K</button>
+                <button class="py-3 rounded-xl font-bold text-sm active:scale-95 transition" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.75)" onclick="addUang(50000)">50K</button>
+                <button class="py-3 rounded-xl font-bold text-sm active:scale-95 transition" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.75)" onclick="addUang(100000)">100K</button>
             </div>
 
-            <!-- Touch-optimized Grid -->
-            <div class="grid grid-cols-3 gap-3 flex-1 mb-4 content-end">
-                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('1')">1</button>
-                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('2')">2</button>
-                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('3')">3</button>
-                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('4')">4</button>
-                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('5')">5</button>
-                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('6')">6</button>
-                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('7')">7</button>
-                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('8')">8</button>
-                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('9')">9</button>
-                <button aria-label="Hapus angka" class="py-4 sm:py-5 bg-ink-700 rounded-2xl font-bold text-2xl text-red-500 active:scale-95 transition" onclick="typeNumpad('C')"><i class="fas fa-backspace" aria-hidden="true"></i></button>
-                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-2xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('0')">0</button>
-                <button class="py-4 sm:py-5 bg-ink-900 shadow-sm rounded-2xl font-bold text-xl text-ink-100 active:scale-95 active:bg-ink-800 transition" onclick="typeNumpad('000')">000</button>
+            <!-- Numpad -->
+            <div class="grid grid-cols-3 gap-2.5 flex-1 mb-3 content-end">
+                <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('1')">1</button>
+                <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('2')">2</button>
+                <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('3')">3</button>
+                <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('4')">4</button>
+                <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('5')">5</button>
+                <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('6')">6</button>
+                <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('7')">7</button>
+                <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('8')">8</button>
+                <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('9')">9</button>
+                <button aria-label="Hapus angka" class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.18);color:#f87171" onclick="typeNumpad('C')"><i class="fas fa-backspace"></i></button>
+                <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('0')">0</button>
+                <button class="py-4 sm:py-5 rounded-2xl font-bold text-xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('000')">000</button>
             </div>
 
-            <button onclick="processFinalPayment()" id="btn-confirm-pay" class="btn-gold w-full text-[#16244d] font-bold py-4 rounded-2xl active:scale-95 transition flex items-center justify-center gap-2 text-lg disabled:bg-ink-600 disabled:shadow-none disabled:text-ink-300">
-                Konfirmasi
+            <button onclick="processFinalPayment()" id="btn-confirm-pay" class="btn-gold w-full font-extrabold py-4 rounded-2xl flex items-center justify-center gap-2 text-base disabled:active:scale-100" style="color:#0d1630">
+                <i class="fas fa-check-circle text-sm"></i> Konfirmasi Bayar
             </button>
         </div>
     </div>
@@ -761,7 +1029,7 @@
     </div>
 
     <!-- 6. TOAST NOTIFICATION -->
-    <div id="toast" class="fixed top-20 left-4 right-4 bg-ink-950 text-white px-4 py-3 rounded-2xl shadow-2xl text-sm font-bold flex items-center gap-3 transform -translate-y-32 transition-transform duration-300 z-[80] pointer-events-none">
+    <div id="toast" class="fixed top-20 left-4 right-4 text-white px-4 py-3 rounded-2xl text-sm font-bold flex items-center gap-3 transform -translate-y-32 transition-transform duration-300 z-[80] pointer-events-none">
         <div id="toast-icon-wrap" class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center shrink-0"><i id="toast-icon" class="fas fa-check text-white"></i></div>
         <span id="toast-msg" class="line-clamp-1">Item ditambahkan</span>
     </div>
@@ -1152,6 +1420,15 @@
 
         /** Ambil daftar produk aktif dari backend & mapping ke bentuk yang dipakai UI. */
         async function loadProducts() {
+            // Tampilkan skeleton loading dulu
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = Array(6).fill(0).map(() => `
+                <div class="skel-card">
+                    <div class="skel skel-img"></div>
+                    <div class="skel skel-r1"></div>
+                    <div class="skel skel-r2"></div>
+                    <div class="skel skel-r3"></div>
+                </div>`).join('');
             try {
                 const res = await fetch(`${API_BASE}/api/produk`, { credentials: 'include' });
                 const data = await res.json();
@@ -1174,27 +1451,22 @@
             }
         }
 
-        /** Render tombol filter kategori secara dinamis berdasarkan kategori yang benar-benar ada di data produk. */
+        /** Render pill filter kategori premium. */
         function renderCategoryFilters() {
             const wrap = document.getElementById('category-filters');
             const kategoriList = ['Semua', ...new Set(products.map(p => p.kategori))];
             wrap.innerHTML = kategoriList.map((k, i) => `
-                <button class="cat-btn px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap active:scale-95 transition ${i === 0 ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-ink-900 text-ink-200 border border-ink-700'}" data-cat="${escapeHtml(k)}">${escapeHtml(k)}</button>
+                <button class="cat-pill${i === 0 ? ' cat-active' : ''}" data-cat="${escapeHtml(k)}">${escapeHtml(k)}</button>
             `).join('');
             bindCategoryFilterEvents();
         }
 
         function bindCategoryFilterEvents() {
-            document.querySelectorAll('.cat-btn').forEach(btn => {
+            document.querySelectorAll('.cat-pill').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.cat-btn').forEach(b => {
-                        b.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-200');
-                        b.classList.add('bg-ink-900', 'text-ink-200', 'border-ink-700');
-                    });
-                    const target = e.currentTarget;
-                    target.classList.remove('bg-ink-900', 'text-ink-200', 'border-ink-700');
-                    target.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-200');
-                    currentCategory = target.dataset.cat;
+                    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('cat-active'));
+                    e.currentTarget.classList.add('cat-active');
+                    currentCategory = e.currentTarget.dataset.cat;
                     renderProducts(document.getElementById('search-input').value);
                 });
             });
@@ -1724,43 +1996,44 @@
         function renderProducts(searchQuery = '') {
             const grid = document.getElementById('product-grid');
             grid.innerHTML = '';
-            
+
             let filtered = products;
-            if (currentCategory !== 'Semua') {
-                filtered = filtered.filter(p => p.kategori === currentCategory);
-            }
+            if (currentCategory !== 'Semua') filtered = filtered.filter(p => p.kategori === currentCategory);
             if (searchQuery) {
                 const q = searchQuery.toLowerCase();
                 filtered = filtered.filter(p => p.nama.toLowerCase().includes(q) || p.barcode.includes(q));
             }
 
-            if(filtered.length === 0) {
-                grid.innerHTML = '<div class="col-span-2 sm:col-span-3 text-center text-ink-400 py-10">Produk tidak ditemukan</div>';
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-2 sm:col-span-3 flex flex-col items-center justify-center py-14 gap-3">
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)">
+                            <i class="fas fa-box-open text-2xl" style="color:rgba(255,255,255,.18)"></i>
+                        </div>
+                        <p class="font-bold text-sm" style="color:rgba(255,255,255,.22)">Produk tidak ditemukan</p>
+                    </div>`;
                 return;
             }
 
-            filtered.forEach((p, index) => {
+            filtered.forEach(p => {
                 const card = document.createElement('div');
-                card.className = 'card-hover bg-ink-900 rounded-2xl p-3 shadow-sm flex flex-col active:scale-95 transition-transform touch-manipulation border border-ink-800 cursor-pointer';
-                card.onclick = () => { 
-                    playFeedback('beep'); 
+                const soldOut = p.stok <= 0;
+                card.className = `prod-card${soldOut ? ' sold-out' : ''}`;
+                card.onclick = () => {
+                    playFeedback('beep');
                     card.classList.add('animate-tap');
                     setTimeout(() => card.classList.remove('animate-tap'), 200);
-                    addToCart(p); 
+                    addToCart(p);
                 };
-                const stokBadgeClass = p.stok <= 0
-                    ? 'bg-red-500 text-white'
-                    : p.stok <= 5
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-white/90 text-blue-600';
+                const badgeCls = soldOut ? 'stk-out' : p.stok <= 5 ? 'stk-low' : 'stk-ok';
+                const badgeTxt = soldOut ? 'Habis' : p.stok <= 5 ? `⚠ ${p.stok}` : p.stok;
                 card.innerHTML = `
-                    <div class="relative mb-2">
-                        <img src="${escapeHtml(p.img)}" class="w-full aspect-square object-cover rounded-xl bg-ink-950 border border-ink-800" loading="lazy">
-                        <span class="absolute top-2 right-2 text-[9px] font-bold backdrop-blur px-1.5 py-0.5 rounded shadow-sm ${stokBadgeClass}">Stok ${p.stok}</span>
+                    <div class="prod-img-wrap">
+                        <img src="${escapeHtml(p.img)}" loading="lazy" alt="${escapeHtml(p.nama)}">
+                        <span class="stk-badge ${badgeCls}">${badgeTxt}</span>
                     </div>
-                    <h3 class="font-bold text-ink-100 text-[11px] leading-tight mb-1 line-clamp-2">${escapeHtml(p.nama)}</h3>
-                    <p class="text-[#a17423] font-extrabold text-sm mt-auto">${formatRp(p.harga)}</p>
-                `;
+                    <h3 class="prod-name">${escapeHtml(p.nama)}</h3>
+                    <p class="prod-price">${formatRp(p.harga)}</p>`;
                 grid.appendChild(card);
             });
         }
@@ -1875,21 +2148,28 @@
 
         function updateCartUI() {
             const container = document.getElementById('cart-items');
-            const floating = document.getElementById('floating-cart');
-            
+            const floating  = document.getElementById('floating-cart');
+
             if (cart.length === 0) {
-                container.innerHTML = '<div class="text-center text-ink-400 py-10"><i class="fas fa-shopping-basket text-4xl mb-2 text-ink-600"></i><p class="font-bold text-sm">Keranjang Kosong</p></div>';
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-12 gap-3">
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center" style="background:rgba(214,172,66,.07);border:1px solid rgba(214,172,66,.14)">
+                            <i class="fas fa-shopping-basket text-2xl" style="color:rgba(214,172,66,.35)"></i>
+                        </div>
+                        <p class="font-bold text-sm" style="color:rgba(255,255,255,.22)">Keranjang kosong</p>
+                        <p class="text-xs" style="color:rgba(255,255,255,.12)">Pilih produk untuk mulai</p>
+                    </div>`;
                 document.getElementById('btn-pay').disabled = true;
-                floating.classList.add('translate-y-24'); 
-                setTimeout(() => { if(cart.length===0) floating.classList.add('hidden'); }, 300);
-                cartDiskon = 0; // diskon tidak boleh nyangkut ke transaksi berikutnya
+                floating.classList.add('translate-y-24');
+                setTimeout(() => { if (cart.length === 0) floating.classList.add('hidden'); }, 300);
+                cartDiskon = 0;
                 updateTotals(0);
                 return;
             }
 
-            let subtotal = 0; let totalItems = 0;
+            let subtotal = 0, totalItems = 0;
             container.innerHTML = '';
-            
+
             cart.forEach((item, index) => {
                 const hargaBaris = item.harga * item.qty;
                 const diskonItem = item.diskon_item || 0;
@@ -1897,20 +2177,20 @@
                 subtotal += netBaris;
                 totalItems += item.qty;
                 container.innerHTML += `
-                    <div class="flex items-center gap-3 bg-ink-900 p-3 rounded-2xl border border-ink-800 shadow-sm">
+                    <div class="cart-item">
                         <div class="flex-1 min-w-0">
-                            <h4 class="font-bold text-xs text-ink-50 truncate">${escapeHtml(item.nama)}</h4>
-                            <p class="text-[10px] text-blue-600 font-bold mt-0.5">${formatRp(item.harga)}</p>
-                            <button onclick="openDiskonItemModal(${index})" class="text-[10px] font-bold mt-1 ${diskonItem > 0 ? 'text-amber-600' : 'text-ink-400'}">
-                                <i class="fas fa-tag mr-1"></i>${diskonItem > 0 ? `Diskon ${formatRp(diskonItem)}` : 'Diskon item'}
+                            <h4 class="font-bold text-xs truncate" style="color:rgba(222,218,238,.9)">${escapeHtml(item.nama)}</h4>
+                            <p class="text-[11px] font-bold mt-0.5" style="color:rgba(214,172,66,.75)">${formatRp(item.harga)}</p>
+                            <button onclick="openDiskonItemModal(${index})" class="text-[10px] font-bold mt-1.5 active:opacity-50 transition" style="color:${diskonItem > 0 ? '#f59e0b' : 'rgba(255,255,255,.25)'}">
+                                <i class="fas fa-tag mr-1"></i>${diskonItem > 0 ? `Diskon ${formatRp(diskonItem)}` : 'Beri diskon'}
                             </button>
                         </div>
                         <div class="flex flex-col items-end shrink-0 gap-2">
-                            <p class="font-bold text-xs text-ink-50">${formatRp(netBaris)}</p>
-                            <div class="flex items-center gap-2 bg-ink-950 rounded-lg border border-ink-700 p-1">
-                                <button aria-label="Kurangi jumlah" onclick="updateQty(${index}, -1)" class="w-6 h-6 flex items-center justify-center bg-ink-900 rounded shadow-sm text-ink-200 active:scale-95"><i class="fas fa-minus text-[10px]" aria-hidden="true"></i></button>
-                                <button aria-label="Edit jumlah manual" onclick="editQtyManual(${index})" class="w-8 text-center text-xs font-bold active:text-blue-600 transition">${item.qty}</button>
-                                <button aria-label="Tambah jumlah" onclick="updateQty(${index}, 1)" class="w-6 h-6 flex items-center justify-center bg-ink-900 rounded shadow-sm text-ink-200 active:scale-95"><i class="fas fa-plus text-[10px]" aria-hidden="true"></i></button>
+                            <p class="font-bold text-[13px]" style="color:rgba(222,218,238,.88)">${formatRp(netBaris)}</p>
+                            <div class="qty-stepper">
+                                <button aria-label="Kurangi" onclick="updateQty(${index}, -1)" class="qty-btn"><i class="fas fa-minus text-[9px]"></i></button>
+                                <span onclick="editQtyManual(${index})" class="qty-num">${item.qty}</span>
+                                <button aria-label="Tambah"  onclick="updateQty(${index},  1)" class="qty-btn"><i class="fas fa-plus text-[9px]"></i></button>
                             </div>
                         </div>
                     </div>`;
@@ -2059,14 +2339,9 @@
         // ==========================================
         document.querySelectorAll('.pay-method').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.pay-method').forEach(b => {
-                    b.classList.remove('border-blue-600', 'bg-blue-50', 'text-blue-700', 'border-2');
-                    b.classList.add('border-ink-700', 'text-ink-300', 'border');
-                });
-                const target = e.currentTarget;
-                target.classList.remove('border-ink-700', 'text-ink-300', 'border');
-                target.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-700', 'border-2');
-                activePaymentMethod = target.dataset.method;
+                document.querySelectorAll('.pay-method').forEach(b => b.classList.remove('pay-active'));
+                e.currentTarget.classList.add('pay-active');
+                activePaymentMethod = e.currentTarget.dataset.method;
             });
         });
 
@@ -2836,13 +3111,13 @@
             const btn = document.getElementById('btn-network');
             if (!btn) return;
             if (navigator.onLine) {
-                btn.classList.remove('bg-red-500', 'shadow-red-500/30');
-                btn.classList.add('bg-green-500', 'shadow-green-500/30');
-                btn.innerHTML = '<i class="fas fa-wifi"></i>';
+                btn.classList.remove('net-offline');
+                btn.classList.add('net-online');
+                btn.innerHTML = '<i class="fas fa-wifi text-sm"></i>';
             } else {
-                btn.classList.remove('bg-green-500', 'shadow-green-500/30');
-                btn.classList.add('bg-red-500', 'shadow-red-500/30');
-                btn.innerHTML = '<i class="fas fa-wifi-slash"></i>';
+                btn.classList.remove('net-online');
+                btn.classList.add('net-offline');
+                btn.innerHTML = '<i class="fas fa-wifi-slash text-sm"></i>';
             }
         }
 
