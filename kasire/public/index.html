@@ -74,18 +74,19 @@
 
         /* ===== SEARCH GLASS ===== */
         .search-glass {
-            background: rgba(255,255,255,.07) !important;
-            border: 1px solid rgba(255,255,255,.1) !important;
-            color: rgba(255,255,255,.9) !important;
+            background: rgba(255,255,255,.09) !important;
+            border: 1px solid rgba(255,255,255,.15) !important;
+            color: rgba(255,255,255,.95) !important;
+            font-size: 14px !important;
             transition: border-color .2s, box-shadow .2s, background .2s;
         }
         .search-glass:focus {
-            background: rgba(255,255,255,.1) !important;
-            border-color: rgba(214,172,66,.5) !important;
-            box-shadow: 0 0 0 3px rgba(214,172,66,.1) !important;
+            background: rgba(255,255,255,.12) !important;
+            border-color: rgba(214,172,66,.6) !important;
+            box-shadow: 0 0 0 3px rgba(214,172,66,.15) !important;
             outline: none !important;
         }
-        .search-glass::placeholder { color: rgba(255,255,255,.3) !important; }
+        .search-glass::placeholder { color: rgba(255,255,255,.48) !important; }
 
         /* ===== HEADER ICON BUTTONS ===== */
         .hdr-btn {
@@ -115,11 +116,11 @@
         .cat-pill {
             padding: 7px 15px;
             border-radius: 100px;
-            font-size: 11.5px; font-weight: 700;
+            font-size: 12px; font-weight: 700;
             white-space: nowrap;
-            border: 1px solid rgba(255,255,255,.07);
-            background: rgba(255,255,255,.04);
-            color: rgba(255,255,255,.45);
+            border: 1px solid rgba(255,255,255,.12);
+            background: rgba(255,255,255,.06);
+            color: rgba(255,255,255,.7);
             transition: all .22s cubic-bezier(.34,1.56,.64,1);
             letter-spacing: .01em;
         }
@@ -182,27 +183,27 @@
         /* Stock badge */
         .stk-badge {
             position: absolute; top: 7px; right: 7px;
-            font-size: 9px; font-weight: 800;
-            padding: 2px 7px; border-radius: 100px;
+            font-size: 10px; font-weight: 800;
+            padding: 3px 8px; border-radius: 100px;
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
             letter-spacing: .02em; z-index: 2;
-            border: 1px solid rgba(255,255,255,.14);
+            border: 1px solid rgba(255,255,255,.18);
         }
-        .stk-ok  { background: rgba(255,255,255,.87); color: #1944b8; }
-        .stk-low { background: rgba(251,191,36,.85);  color: #7c2d12; }
-        .stk-out { background: rgba(239,68,68,.85);   color: #fff;    }
+        .stk-ok  { background: rgba(255,255,255,.92); color: #1535a0; }
+        .stk-low { background: rgba(251,191,36,.92);  color: #6b2400; }
+        .stk-out { background: rgba(220,38,38,.9);    color: #fff;    }
 
         /* Product name & price */
         .prod-name {
-            font-size: 11px; font-weight: 700;
-            color: rgba(222,218,238,.9); line-height: 1.35;
+            font-size: 12.5px; font-weight: 700;
+            color: rgba(235,232,255,.95); line-height: 1.4;
             display: -webkit-box; -webkit-line-clamp: 2;
             -webkit-box-orient: vertical; overflow: hidden;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
         }
         .prod-price {
-            font-size: 13px; font-weight: 800;
-            background: linear-gradient(135deg, #e8c55a 0%, #c2932e 100%);
+            font-size: 14px; font-weight: 800;
+            background: linear-gradient(135deg, #f0d070 0%, #d6a030 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             background-clip: text; margin-top: auto; line-height: 1;
         }
@@ -257,50 +258,51 @@
         /* QTY stepper */
         .qty-stepper {
             display: flex; align-items: center; gap: 4px;
-            background: rgba(5,9,28,.7);
-            border: 1px solid rgba(255,255,255,.07);
-            border-radius: 11px; padding: 4px 5px;
+            background: rgba(5,9,28,.8);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 12px; padding: 4px 6px;
         }
         .qty-btn {
-            width: 26px; height: 26px;
+            width: 30px; height: 30px;
             display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,.07);
-            border-radius: 7px;
-            color: rgba(255,255,255,.65);
+            background: rgba(255,255,255,.1);
+            border-radius: 8px;
+            color: rgba(255,255,255,.85);
+            font-size: 15px;
             transition: background .15s, transform .15s;
             touch-action: manipulation;
         }
         .qty-btn:active {
-            background: rgba(214,172,66,.2);
-            color: #d6ac42; transform: scale(.88);
+            background: rgba(214,172,66,.28);
+            color: #e8c55a; transform: scale(.88);
         }
         .qty-num {
-            min-width: 24px; text-align: center;
-            font-size: 13px; font-weight: 800;
-            color: rgba(255,255,255,.88);
+            min-width: 26px; text-align: center;
+            font-size: 14px; font-weight: 800;
+            color: rgba(255,255,255,.95);
             cursor: pointer; padding: 0 3px;
         }
 
         /* Payment pills */
         .pay-pill {
             transition: all .2s cubic-bezier(.34,1.56,.64,1);
-            background: rgba(255,255,255,.04);
-            border: 1px solid rgba(255,255,255,.07);
-            border-radius: 13px; padding: 10px 4px 8px;
+            background: rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 13px; padding: 10px 4px 9px;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             gap: 5px;
-            color: rgba(255,255,255,.42);
-            font-size: 10px; font-weight: 800;
+            color: rgba(255,255,255,.72);
+            font-size: 11px; font-weight: 800;
             cursor: pointer; touch-action: manipulation;
         }
-        .pay-pill i { font-size: 15px; }
+        .pay-pill i { font-size: 16px; }
         .pay-pill:active { transform: scale(.90); }
         .pay-pill.pay-active {
-            background: rgba(214,172,66,.13);
-            border-color: rgba(214,172,66,.5);
-            color: #d6ac42;
-            box-shadow: 0 4px 16px -5px rgba(214,172,66,.3);
+            background: rgba(214,172,66,.18);
+            border-color: rgba(214,172,66,.6);
+            color: #e8c55a;
+            box-shadow: 0 4px 18px -5px rgba(214,172,66,.4);
         }
 
         /* ===== GOLD BUTTON ===== */
@@ -337,12 +339,28 @@
         }
 
         /* ===== MISC ===== */
-        .accent-gold { color: #c2932e; }
+        .accent-gold { color: #d6a030; }
         .card-hover  { transition: transform .15s ease, box-shadow .15s ease; }
         .pb-safe     { padding-bottom: calc(1rem + var(--safe-bottom)); }
         .font-mono   { font-family: 'JetBrains Mono', monospace; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* ===== FOCUS RING ===== */
+        *:focus-visible {
+            outline: 2px solid rgba(214,172,66,.85) !important;
+            outline-offset: 2px !important;
+        }
+
+        /* ===== PREFERS REDUCED MOTION ===== */
+        @media (prefers-reduced-motion: reduce) {
+            .net-online  { animation: none !important; }
+            .animate-tap { animation: none !important; }
+            .animate-slide-up { animation: none !important; }
+            .skel        { animation: none !important; background: rgba(255,255,255,.05) !important; }
+            .drawer      { transition: none !important; }
+            .prod-card, .cat-pill, .pay-pill, .btn-gold { transition: none !important; }
+        }
 
         /* ===== DRAWER ===== */
         .drawer { transition: transform .38s cubic-bezier(.32,.72,0,1); }
@@ -405,8 +423,8 @@
                         <h1 id="app-title-header" class="font-display font-extrabold text-[17px] leading-tight tracking-wide">KASIR PRO</h1>
                         <span class="text-[8px] font-black px-1.5 py-0.5 rounded-md tracking-widest" style="background:linear-gradient(135deg,rgba(214,172,66,.2),rgba(161,116,35,.14));border:1px solid rgba(214,172,66,.42);color:#d6ac42">PRO</span>
                     </div>
-                    <p class="text-[10px] font-medium" style="color:rgba(180,200,255,.7)" id="header-status">
-                        <i class="fas fa-circle text-[7px] text-green-400 mr-1" style="filter:drop-shadow(0 0 4px #4ade80)"></i>Online • JKT
+                    <p class="text-[11px] font-medium" style="color:rgba(180,210,255,.85)" id="header-status">
+                        <i class="fas fa-circle text-[7px] text-green-400 mr-1" aria-hidden="true" style="filter:drop-shadow(0 0 4px #4ade80)"></i>Online • JKT
                     </p>
                 </div>
             </div>
@@ -463,12 +481,12 @@
                 <span id="fc-count" class="absolute -top-2 -right-2 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold" style="background:#ef4444;border:2px solid #05091c">0</span>
             </div>
             <div>
-                <p class="text-[10px] font-semibold" style="color:rgba(255,255,255,.4)">Total Tagihan</p>
+                <p class="text-[11px] font-semibold" style="color:rgba(255,255,255,.72)">Total Tagihan</p>
                 <p id="fc-total" class="font-extrabold text-[18px] leading-none mt-0.5" style="background:linear-gradient(135deg,#e8c55a,#c2932e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Rp 0</p>
             </div>
         </div>
-        <div class="flex items-center gap-1.5 font-bold text-sm px-3.5 py-2.5 rounded-xl" style="background:rgba(255,255,255,.09);color:rgba(255,255,255,.8)">
-            Bayar <i class="fas fa-chevron-up text-[10px] ml-0.5"></i>
+        <div class="flex items-center gap-1.5 font-bold text-sm px-3.5 py-2.5 rounded-xl" style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.95)">
+            Bayar <i class="fas fa-chevron-up text-[11px] ml-0.5" aria-hidden="true"></i>
         </div>
     </div>
 
@@ -511,23 +529,23 @@
         <div class="px-4 pt-4 shrink-0 pb-safe" style="background:#070e22;border-top:1px solid rgba(255,255,255,.05)">
             <!-- Totals -->
             <div class="rounded-2xl p-3.5 mb-3" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)">
-                <div class="flex justify-between text-xs font-semibold mb-1.5" style="color:rgba(255,255,255,.4)">
+                <div class="flex justify-between text-xs font-semibold mb-1.5" style="color:rgba(255,255,255,.68)">
                     <span>Subtotal</span><span id="cart-subtotal">Rp 0</span>
                 </div>
-                <div class="flex justify-between items-center text-xs font-semibold mb-1.5" style="color:rgba(255,255,255,.4)">
+                <div class="flex justify-between items-center text-xs font-semibold mb-1.5" style="color:rgba(255,255,255,.68)">
                     <span>Diskon</span>
-                    <button onclick="openDiskonModal()" id="cart-diskon-btn" class="flex items-center gap-1 active:opacity-50 transition" style="color:#f87171">
-                        <span id="cart-diskon">- Rp 0</span> <i class="fas fa-pen text-[9px] opacity-60"></i>
+                    <button onclick="openDiskonModal()" id="cart-diskon-btn" class="flex items-center gap-1.5 active:opacity-50 transition" style="color:#fca5a5">
+                        <span id="cart-diskon">- Rp 0</span> <i class="fas fa-pen text-[10px]" aria-hidden="true"></i>
                     </button>
                 </div>
-                <div class="flex justify-between items-center text-xs font-semibold mb-2 pb-2" style="color:rgba(255,255,255,.4);border-bottom:1px solid rgba(255,255,255,.06)">
+                <div class="flex justify-between items-center text-xs font-semibold mb-2 pb-2" style="color:rgba(255,255,255,.68);border-bottom:1px solid rgba(255,255,255,.09)">
                     <span>Pajak</span>
-                    <button onclick="openPajakModal()" id="cart-pajak-btn" class="flex items-center gap-1 active:opacity-50 transition" style="color:rgba(255,255,255,.5)">
-                        <span id="cart-tax">Rp 0</span> <i class="fas fa-pen text-[9px] opacity-60"></i>
+                    <button onclick="openPajakModal()" id="cart-pajak-btn" class="flex items-center gap-1.5 active:opacity-50 transition" style="color:rgba(255,255,255,.75)">
+                        <span id="cart-tax">Rp 0</span> <i class="fas fa-pen text-[10px]" aria-hidden="true"></i>
                     </button>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-sm font-bold" style="color:rgba(255,255,255,.85)">Total Tagihan</span>
+                    <span class="text-sm font-bold" style="color:rgba(255,255,255,.92)">Total Tagihan</span>
                     <span id="cart-total" class="font-extrabold text-2xl font-mono" style="background:linear-gradient(135deg,#e8c55a,#c2932e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Rp 0</span>
                 </div>
             </div>
@@ -563,18 +581,18 @@
             <button aria-label="Batal" onclick="cancelNumpad()" class="absolute left-4 top-10 w-10 h-10 flex items-center justify-center rounded-full hdr-btn">
                 <i class="fas fa-arrow-left" aria-hidden="true" style="color:rgba(255,255,255,.7)"></i>
             </button>
-            <p class="text-[11px] font-semibold mb-1.5" style="color:rgba(180,200,255,.6)">Total Tagihan</p>
+            <p class="text-[12px] font-semibold mb-1.5" style="color:rgba(180,210,255,.82)">Total Tagihan</p>
             <h2 class="text-4xl font-extrabold font-mono" id="numpad-tagihan" style="background:linear-gradient(135deg,#e8c55a,#c2932e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Rp 0</h2>
         </div>
 
         <div class="flex-1 flex flex-col p-5 pb-safe">
-            <p class="text-[10px] font-bold uppercase text-center mb-1" style="color:rgba(255,255,255,.3);letter-spacing:.08em">Uang Diterima</p>
+            <p class="text-[12px] font-bold uppercase text-center mb-1" style="color:rgba(255,255,255,.6);letter-spacing:.06em">Uang Diterima</p>
             <input type="text" id="input-diterima" readonly
                    class="w-full text-center text-4xl font-extrabold bg-transparent border-none focus:outline-none mb-2 font-mono h-12"
                    style="color:rgba(255,255,255,.92)" placeholder="Rp 0">
 
             <div class="flex justify-center items-center mb-5 gap-2 py-2.5 rounded-2xl" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)">
-                <span class="text-xs font-bold" style="color:rgba(255,255,255,.4)">Kembalian:</span>
+                <span class="text-xs font-bold" style="color:rgba(255,255,255,.7)">Kembalian:</span>
                 <span class="text-xl font-extrabold font-mono text-orange-400" id="numpad-kembalian">Rp 0</span>
             </div>
 
@@ -597,7 +615,7 @@
                 <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('7')">7</button>
                 <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('8')">8</button>
                 <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('9')">9</button>
-                <button aria-label="Hapus angka" class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.18);color:#f87171" onclick="typeNumpad('C')"><i class="fas fa-backspace"></i></button>
+                <button aria-label="Hapus angka" class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);color:#fca5a5" onclick="typeNumpad('C')"><i class="fas fa-backspace" aria-hidden="true"></i></button>
                 <button class="py-4 sm:py-5 rounded-2xl font-bold text-2xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('0')">0</button>
                 <button class="py-4 sm:py-5 rounded-2xl font-bold text-xl active:scale-95 transition" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.88)" onclick="typeNumpad('000')">000</button>
             </div>
@@ -611,16 +629,16 @@
     <!-- 3. STRUK THERMAL MODAL -->
     <div id="modal-receipt" class="fixed inset-0 bg-ink-950/80 z-[70] hidden items-center justify-center p-4 backdrop-blur-sm">
         <div class="w-full max-w-sm flex flex-col items-center animate-slide-up">
-            <div id="print-area" class="thermal-paper w-full p-5 text-ink-50 font-mono text-sm max-h-[70vh] overflow-y-auto hide-scroll rounded-b">
-                <div class="text-center border-b border-dashed border-ink-500 pb-3 mb-3">
+            <div id="print-area" class="thermal-paper w-full p-5 font-mono text-sm max-h-[70vh] overflow-y-auto hide-scroll rounded-b" style="color:#111827">
+                <div class="text-center border-b border-dashed pb-3 mb-3" style="border-color:#9ca3af">
                     <h2 id="receipt-toko-nama" class="font-extrabold text-base">KASIR CLOUD</h2>
                     <p id="receipt-toko-alamat" class="text-[10px]">Jl. Sudirman No. 1, Jakarta</p>
                 </div>
                 
-                <div class="text-[10px] flex justify-between mb-3 border-b border-dashed border-ink-500 pb-2">
+                <div class="text-[11px] flex justify-between mb-3 border-b border-dashed pb-2" style="border-color:#9ca3af;color:#374151">
                     <div>
                         <p id="receipt-date">00/00/0000 00:00</p>
-                        <p id="receipt-trx" class="font-bold">TRX-</p>
+                        <p id="receipt-trx" class="font-bold" style="color:#111827">TRX-</p>
                     </div>
                     <div class="text-right">
                         <p id="receipt-kasir-nama">Kasir: -</p>
@@ -628,27 +646,27 @@
                     </div>
                 </div>
                 
-                <div id="receipt-items" class="space-y-2 mb-3 text-[11px]"></div>
+                <div id="receipt-items" class="space-y-2 mb-3 text-[11px]" style="color:#1f2937"></div>
                 
-                <div class="border-t border-dashed border-ink-500 pt-2 text-[11px] space-y-1">
+                <div class="border-t border-dashed pt-2 text-[11px] space-y-1" style="border-color:#9ca3af;color:#374151">
                     <div class="flex justify-between"><span>Subtotal:</span><span id="r-subtotal">Rp0</span></div>
-                    <div class="flex justify-between" id="r-diskon-row" style="display:none"><span>Diskon:</span><span id="r-diskon" class="text-red-500">- Rp0</span></div>
+                    <div class="flex justify-between" id="r-diskon-row" style="display:none"><span>Diskon:</span><span id="r-diskon" style="color:#dc2626">- Rp0</span></div>
                     <div class="flex justify-between" id="r-tax-row" style="display:none"><span id="r-tax-label">Pajak:</span><span id="r-tax">Rp0</span></div>
-                    <div class="flex justify-between font-extrabold text-sm mt-1"><span>TOTAL:</span><span id="r-total">Rp0</span></div>
+                    <div class="flex justify-between font-extrabold text-sm mt-1" style="color:#111827"><span>TOTAL:</span><span id="r-total">Rp0</span></div>
                 </div>
 
                 <!-- Rincian pembayaran: bisa 1 baris (single method) atau beberapa
                      baris sekaligus (split payment, mis. cash + QRIS). -->
-                <div class="border-t border-dashed border-ink-500 pt-2 mt-2 text-[11px] space-y-1" id="receipt-payment-section">
+                <div class="border-t border-dashed pt-2 mt-2 text-[11px] space-y-1" style="border-color:#9ca3af;color:#374151" id="receipt-payment-section">
                     <div id="receipt-payment-rows" class="space-y-1"></div>
-                    <div class="flex justify-between font-bold" id="receipt-change-row">
+                    <div class="flex justify-between font-bold" id="receipt-change-row" style="color:#111827">
                         <span>Kembali:</span><span id="r-change">Rp0</span>
                     </div>
                 </div>
-                <div class="text-center mt-5 pt-3 border-t border-dashed border-ink-500">
+                <div class="text-center mt-5 pt-3 border-t border-dashed" style="border-color:#9ca3af">
                     <div id="receipt-icon-area" class="mb-2"></div>
-                    <p id="receipt-footer" class="text-[10px] font-bold">Terima Kasih</p>
-                    <p id="receipt-catatan" class="text-[9px] text-ink-300 mt-1" style="display:none"></p>
+                    <p id="receipt-footer" class="text-[11px] font-bold" style="color:#111827">Terima Kasih</p>
+                    <p id="receipt-catatan" class="text-[10px] mt-1" style="display:none;color:#6b7280"></p>
                 </div>
             </div>
 

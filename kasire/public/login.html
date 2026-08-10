@@ -61,18 +61,19 @@
 
         /* Input premium */
         .input-premium {
-            background: rgba(255,255,255,.04) !important;
-            border: 1px solid rgba(255,255,255,.08) !important;
-            color: rgba(255,255,255,.9) !important;
+            background: rgba(255,255,255,.06) !important;
+            border: 1px solid rgba(255,255,255,.14) !important;
+            color: rgba(255,255,255,.95) !important;
             transition: border-color .2s, background .2s, box-shadow .2s;
+            font-size: 15px !important;
         }
         .input-premium:focus {
-            background: rgba(255,255,255,.06) !important;
-            border-color: rgba(214,172,66,.5) !important;
-            box-shadow: 0 0 0 3px rgba(214,172,66,.1) !important;
+            background: rgba(255,255,255,.09) !important;
+            border-color: rgba(214,172,66,.65) !important;
+            box-shadow: 0 0 0 3px rgba(214,172,66,.15) !important;
             outline: none !important;
         }
-        .input-premium::placeholder { color: rgba(255,255,255,.2) !important; }
+        .input-premium::placeholder { color: rgba(255,255,255,.35) !important; }
         input:-webkit-autofill,
         input:-webkit-autofill:hover,
         input:-webkit-autofill:focus,
@@ -84,9 +85,9 @@
 
         /* Error alert */
         .error-box {
-            background: rgba(239,68,68,.1) !important;
-            border: 1px solid rgba(239,68,68,.22) !important;
-            color: #f87171 !important;
+            background: rgba(239,68,68,.14) !important;
+            border: 1px solid rgba(239,68,68,.35) !important;
+            color: #fca5a5 !important;
         }
 
         @media (min-width: 1024px) {
@@ -119,6 +120,24 @@
             50%     { transform: translateY(-8px); }
         }
         .animate-float { animation: float 4s ease-in-out infinite; }
+
+        /* Focus ring yang jelas untuk keyboard navigasi */
+        *:focus-visible {
+            outline: 2px solid rgba(214,172,66,.8) !important;
+            outline-offset: 2px !important;
+        }
+        button:focus-visible, a:focus-visible {
+            outline: 2px solid rgba(214,172,66,.8) !important;
+            outline-offset: 3px !important;
+        }
+
+        /* Hormati preferensi reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .animate-float { animation: none !important; }
+            .animate-slide-up { animation: none !important; opacity: 1 !important; }
+            .animate-fade-in { animation: none !important; opacity: 1 !important; }
+            * { transition-duration: .01ms !important; }
+        }
     </style>
 </head>
 <body class="w-screen flex flex-col justify-end" style="color:rgba(255,255,255,.9)">
@@ -138,8 +157,8 @@
             <h1 id="login-title" class="text-3xl font-extrabold tracking-tight">KASIR PRO</h1>
             <span class="text-[9px] font-black px-1.5 py-0.5 rounded-md tracking-widest" style="background:rgba(214,172,66,.15);border:1px solid rgba(214,172,66,.35);color:#d6ac42">PRO</span>
         </div>
-        <p class="text-sm font-medium flex items-center gap-1.5" style="color:rgba(180,200,255,.55)">
-            <i class="fas fa-shield-halved text-xs"></i> Secure POS System
+        <p class="text-sm font-medium flex items-center gap-1.5" style="color:rgba(180,200,255,.78)">
+            <i class="fas fa-shield-halved text-xs" aria-hidden="true"></i> Secure POS System
         </p>
 
         <!-- Decorative dots -->
@@ -153,8 +172,8 @@
     <!-- Form panel -->
     <main class="login-form-panel w-full rounded-t-[2rem] px-7 pt-8 pb-[calc(2rem+var(--safe-bottom))] relative z-10 animate-slide-up flex flex-col justify-center" style="box-shadow:0 -14px 50px -8px rgba(0,0,0,.7)">
 
-        <h2 class="text-2xl font-extrabold mb-1" style="color:rgba(255,255,255,.92)">Selamat Datang</h2>
-        <p class="text-sm font-medium mb-7" style="color:rgba(255,255,255,.35)">Masuk untuk memulai shift Anda.</p>
+        <h2 class="text-2xl font-extrabold mb-1" style="color:rgba(255,255,255,.95)">Selamat Datang</h2>
+        <p class="text-sm font-medium mb-7" style="color:rgba(255,255,255,.6)">Masuk untuk memulai shift Anda.</p>
 
         <!-- Error box -->
         <div id="error-alert" class="error-box hidden items-center gap-3 p-4 rounded-2xl mb-5 text-sm font-bold transition-all">
@@ -166,10 +185,10 @@
 
             <!-- Username -->
             <div>
-                <label class="block text-[11px] font-bold mb-2 uppercase tracking-widest" style="color:rgba(255,255,255,.3)">Username Kasir</label>
+                <label for="username" class="block text-[12px] font-bold mb-2 uppercase tracking-widest" style="color:rgba(255,255,255,.68)">Username Kasir</label>
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" style="color:rgba(255,255,255,.25)">
-                        <i class="fas fa-user text-sm"></i>
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" style="color:rgba(255,255,255,.5)">
+                        <i class="fas fa-user text-sm" aria-hidden="true"></i>
                     </div>
                     <input type="text" id="username" required autocomplete="username"
                         class="input-premium block w-full pl-11 pr-4 py-4 rounded-2xl font-bold"
@@ -179,15 +198,15 @@
 
             <!-- Password -->
             <div>
-                <label class="block text-[11px] font-bold mb-2 uppercase tracking-widest" style="color:rgba(255,255,255,.3)">Kata Sandi</label>
+                <label for="password" class="block text-[12px] font-bold mb-2 uppercase tracking-widest" style="color:rgba(255,255,255,.68)">Kata Sandi</label>
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" style="color:rgba(255,255,255,.25)">
-                        <i class="fas fa-lock text-sm"></i>
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" style="color:rgba(255,255,255,.5)">
+                        <i class="fas fa-lock text-sm" aria-hidden="true"></i>
                     </div>
                     <input type="password" id="password" required autocomplete="current-password"
                         class="input-premium block w-full pl-11 pr-12 py-4 rounded-2xl font-bold"
                         placeholder="Masukkan sandi">
-                    <button type="button" aria-label="Tampilkan/sembunyikan sandi" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-4 flex items-center active:scale-90 transition-transform" style="color:rgba(255,255,255,.25)">
+                    <button type="button" aria-label="Tampilkan/sembunyikan sandi" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-4 flex items-center active:scale-90 transition-transform" style="color:rgba(255,255,255,.5)">
                         <i class="fas fa-eye" id="eye-icon" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -201,8 +220,8 @@
             </button>
         </form>
 
-        <p class="text-center text-[10px] mt-7 font-medium" style="color:rgba(255,255,255,.18)">
-            <i class="fas fa-lock text-[8px] mr-1"></i>Dilindungi enkripsi PBKDF2-SHA256
+        <p class="text-center text-[11px] mt-7 font-medium" style="color:rgba(255,255,255,.45)">
+            <i class="fas fa-lock text-[9px] mr-1" aria-hidden="true"></i>Dilindungi enkripsi PBKDF2-SHA256
         </p>
     </main>
 </div><!-- /.login-card -->

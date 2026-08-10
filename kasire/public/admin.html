@@ -29,19 +29,52 @@
         --border: #eef1f6;
         --ring: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.08);
     }
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(180deg,#f6f8fc 0%,#eef1f7 100%); -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(180deg,#f6f8fc 0%,#eef1f7 100%); -webkit-tap-highlight-color: transparent; color: #1e293b; }
     h1, h2, h3, .font-display { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; }
-    .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #16244d; box-shadow: 0 8px 20px -6px rgba(162,116,35,.5); }
+    .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #16244d; box-shadow: 0 8px 20px -6px rgba(162,116,35,.5); font-size: 12px; }
     .header-navy { background: linear-gradient(135deg, #16244d 0%, #1c2f61 55%, #223a78 100%); }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
     .tab-btn.active { background: #fff; color: var(--brand-dark); box-shadow: 0 6px 16px -4px rgba(15,23,42,.25); }
-    .tab-btn { color: rgba(255,255,255,.85); transition: all .18s ease; }
-    .tab-btn:not(.active):hover { background: rgba(255,255,255,.16); }
+    .tab-btn { color: rgba(255,255,255,.9); transition: all .18s ease; font-size: 12px; }
+    .tab-btn:not(.active):hover { background: rgba(255,255,255,.2); }
     .hide-scroll::-webkit-scrollbar { display: none; }
     .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-    table th { position: sticky; top: 0; background: #f8fafc; z-index: 1; }
+    table th { position: sticky; top: 0; background: #f8fafc; z-index: 1; color: #475569; font-size: 11px; }
     @keyframes fadeIn { 0% { opacity:0; transform: translateY(6px);} 100% { opacity:1; transform: translateY(0);} }
     .animate-in { animation: fadeIn .25s cubic-bezier(.16,1,.3,1); }
+
+    /* Admin card border (bukan Tailwind ink-800 yang gelap) */
+    .card-border-b { border-bottom: 1px solid #e2e8f0; }
+    .card h3 { color: #1e293b; }
+    /* text-ink-* overrides untuk admin yang light-mode (area main) */
+    main .text-ink-50  { color: #1e293b !important; }
+    main .text-ink-100 { color: #1e293b !important; }
+    main .text-ink-200 { color: #334155 !important; }
+    main .text-ink-300 { color: #475569 !important; }
+    main .text-ink-400 { color: #64748b !important; }
+    main .bg-ink-950   { background-color: #f1f5f9 !important; }
+    main .bg-ink-900   { background-color: #ffffff !important; }
+    main .bg-ink-800   { background-color: #f1f5f9 !important; }
+    main .border-ink-800 { border-color: #e2e8f0 !important; }
+    main .border-ink-700 { border-color: #cbd5e1 !important; }
+    main .border-ink-600 { border-color: #94a3b8 !important; }
+    main .text-ink-50:where(h2,h3,p,span,div) { color: #1e293b !important; }
+
+    /* Modal dark — bg-ink-900 murni (bukan main) tetap gelap */
+    .fixed .bg-ink-900 { background-color: #0f1b36 !important; }
+    .fixed .text-ink-50  { color: rgba(255,255,255,.95) !important; }
+    .fixed .text-ink-100 { color: rgba(255,255,255,.88) !important; }
+    .fixed .text-ink-200 { color: rgba(255,255,255,.75) !important; }
+    .fixed .text-ink-300 { color: rgba(255,255,255,.62) !important; }
+    .fixed .text-ink-400 { color: rgba(255,255,255,.50) !important; }
+    .fixed .bg-ink-950   { background-color: #070e22 !important; }
+    .fixed .bg-ink-800   { background-color: #1a2748 !important; }
+    .fixed .border-ink-800 { border-color: rgba(255,255,255,.09) !important; }
+    .fixed .border-ink-700 { border-color: rgba(255,255,255,.16) !important; }
+    .fixed .text-ink-200:is(i) { color: rgba(255,255,255,.75) !important; }
+
+    /* Tabel header di main area: putih */
+    main table th { background: #f8fafc !important; color: #475569 !important; }
 
     /* Kartu & panel gaya "pro": border tipis + shadow lembut berlapis, bukan shadow tunggal keras */
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 1.1rem; box-shadow: var(--ring); }
@@ -49,10 +82,65 @@
     .kpi-card::after { content: ""; position: absolute; inset: 0; opacity: .06; background: radial-gradient(120px 80px at 90% -10%, var(--dot,#2563eb), transparent); }
     .badge { display:inline-flex; align-items:center; gap:.3rem; font-weight:700; border-radius:999px; padding:.2rem .6rem; font-size:10px; }
     .period-btn { transition: all .15s ease; }
-    .period-btn.active { background: var(--brand); color: #fff; box-shadow: 0 4px 10px -2px rgba(37,99,235,.4); }
+    .period-btn.active { background: var(--brand); color: #fff; box-shadow: 0 4px 10px -2px rgba(37,99,235,.4); font-weight: 800; }
     .skeleton { background: linear-gradient(90deg,#eef1f6 25%,#f7f9fc 37%,#eef1f6 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; border-radius: .5rem; }
     @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
     .aksi-tag { font-size: 10px; font-weight: 800; letter-spacing: .02em; padding: .2rem .55rem; border-radius: 999px; text-transform: uppercase; }
+
+    /* ============================================================
+       AKSESIBILITAS — KONTRAS, FOCUS, MOTION
+       ============================================================ */
+
+    /* Semua input/select/textarea di admin perlu bg eksplisit agar
+       tidak tergantung browser default (bisa rusak di dark mode) */
+    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]),
+    select,
+    textarea {
+        background-color: #fff !important;
+        color: #1e293b !important;
+    }
+    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):focus,
+    select:focus,
+    textarea:focus {
+        outline: 2px solid #1c2f61 !important;
+        outline-offset: 1px !important;
+        border-color: #1c2f61 !important;
+    }
+
+    /* Input di dalam modal dark (bg-ink-900) pakai warna terbalik */
+    .bg-ink-900 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    .bg-ink-900 select,
+    .bg-ink-900 textarea {
+        background-color: #0d1530 !important;
+        color: rgba(255,255,255,.92) !important;
+        border-color: rgba(255,255,255,.18) !important;
+    }
+    .bg-ink-900 input::placeholder,
+    .bg-ink-900 textarea::placeholder {
+        color: rgba(255,255,255,.4) !important;
+    }
+    .bg-ink-900 input:focus,
+    .bg-ink-900 select:focus,
+    .bg-ink-900 textarea:focus {
+        outline: 2px solid rgba(214,172,66,.7) !important;
+        border-color: rgba(214,172,66,.6) !important;
+    }
+
+    /* Focus ring global untuk keyboard nav */
+    *:focus-visible {
+        outline: 2px solid #1c2f61 !important;
+        outline-offset: 2px !important;
+        border-radius: 4px;
+    }
+
+    /* Prefers reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        .animate-in     { animation: none !important; }
+        .skeleton       { animation: none !important; background: #eef1f6 !important; }
+        .period-btn,
+        .tab-btn,
+        .btn-gold       { transition: none !important; }
+    }
 
     /* ============================================================
        TABEL -> KARTU DI MOBILE (prioritas mobile)
@@ -143,14 +231,14 @@
             </div>
             <div class="flex flex-wrap items-end gap-2">
                 <div>
-                    <label class="block text-[10px] font-bold text-ink-300 uppercase mb-1">Dari</label>
-                    <input type="date" id="rep-dari" class="border border-ink-700 rounded-lg px-2 py-1.5 text-xs font-bold">
+                    <label class="block text-[11px] font-bold uppercase mb-1" style="color:#64748b">Dari</label>
+                    <input type="date" id="rep-dari" class="border border-ink-700 rounded-lg px-2 py-1.5 text-xs font-bold" style="background:#fff;color:#1e293b">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-ink-300 uppercase mb-1">Sampai</label>
-                    <input type="date" id="rep-sampai" class="border border-ink-700 rounded-lg px-2 py-1.5 text-xs font-bold">
+                    <label class="block text-[11px] font-bold uppercase mb-1" style="color:#64748b">Sampai</label>
+                    <input type="date" id="rep-sampai" class="border border-ink-700 rounded-lg px-2 py-1.5 text-xs font-bold" style="background:#fff;color:#1e293b">
                 </div>
-                <button onclick="loadDashboard()" class="bg-ink-950 text-white px-4 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition h-fit"><i class="fas fa-rotate mr-1"></i>Muat Ulang</button>
+                <button onclick="loadDashboard()" class="px-4 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition h-fit" style="background:#1c2f61;color:#fff"><i class="fas fa-rotate mr-1" aria-hidden="true"></i>Muat Ulang</button>
                 <button onclick="exportLaporanExcel()" class="bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition h-fit shadow-md shadow-emerald-200"><i class="fas fa-file-excel mr-1.5"></i>Export Excel</button>
             </div>
         </div>
@@ -159,25 +247,25 @@
         <div class="grid grid-cols-2 sm:grid-cols-2 gap-3 mb-5">
             <div class="card kpi-card p-4" style="--dot:#2563eb">
                 <div class="flex items-start justify-between">
-                    <p class="text-[11px] font-bold text-ink-400 uppercase mb-1">Total Penjualan Hari Ini</p>
-                    <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0"><i class="fas fa-sack-dollar text-xs"></i></div>
+                    <p class="text-[11px] font-bold uppercase mb-1" style="color:#64748b;letter-spacing:.04em">Total Penjualan Hari Ini</p>
+                    <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0"><i class="fas fa-sack-dollar text-xs" aria-hidden="true"></i></div>
                 </div>
-                <p id="kpi-total" class="text-2xl font-extrabold text-ink-50 font-mono">Rp 0</p>
+                <p id="kpi-total" class="text-2xl font-extrabold font-mono" style="color:#1e293b">Rp 0</p>
             </div>
             <div class="card kpi-card p-4" style="--dot:#f97316">
                 <div class="flex items-start justify-between">
-                    <p class="text-[11px] font-bold text-ink-400 uppercase mb-1">Transaksi Hari Ini</p>
-                    <div class="w-8 h-8 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0"><i class="fas fa-receipt text-xs"></i></div>
+                    <p class="text-[11px] font-bold uppercase mb-1" style="color:#64748b;letter-spacing:.04em">Transaksi Hari Ini</p>
+                    <div class="w-8 h-8 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0"><i class="fas fa-receipt text-xs" aria-hidden="true"></i></div>
                 </div>
-                <p id="kpi-jumlah" class="text-2xl font-extrabold text-ink-50 font-mono">0</p>
+                <p id="kpi-jumlah" class="text-2xl font-extrabold font-mono" style="color:#1e293b">0</p>
             </div>
         </div>
 
         <!-- Grafik Tren Penjualan -->
         <div class="card overflow-hidden mb-5">
             <div class="px-4 py-3 border-b border-ink-800 flex flex-wrap items-center justify-between gap-2">
-                <h3 class="font-bold text-sm"><i class="fas fa-chart-area text-blue-500 mr-1.5"></i>Tren Penjualan</h3>
-                <div id="tren-period-group" class="flex gap-1 bg-ink-800 p-1 rounded-lg">
+                <h3 class="font-bold text-sm" style="color:#1e293b"><i class="fas fa-chart-area text-blue-500 mr-1.5" aria-hidden="true"></i>Tren Penjualan</h3>
+                <div id="tren-period-group" class="flex gap-1 p-1 rounded-lg" style="background:#e2e8f0">
                     <button class="period-btn active px-3 py-1 rounded-md text-[11px] font-bold" data-hari="7" onclick="setTrenPeriod(7)">7 Hari</button>
                     <button class="period-btn px-3 py-1 rounded-md text-[11px] font-bold text-ink-300" data-hari="30" onclick="setTrenPeriod(30)">30 Hari</button>
                     <button class="period-btn px-3 py-1 rounded-md text-[11px] font-bold text-ink-300" data-hari="90" onclick="setTrenPeriod(90)">90 Hari</button>
@@ -234,17 +322,17 @@
             </div>
             <div class="grid grid-cols-3 divide-x divide-ink-800 border-b border-ink-800">
                 <div class="p-4 text-center">
-                    <p class="text-[10px] font-bold text-ink-400 uppercase mb-1">Omzet</p>
-                    <p id="laba-omzet" class="text-sm sm:text-lg font-extrabold text-ink-50 font-mono">Rp 0</p>
+                    <p class="text-[11px] font-bold uppercase mb-1" style="color:#64748b">Omzet</p>
+                    <p id="laba-omzet" class="text-sm sm:text-lg font-extrabold font-mono" style="color:#1e293b">Rp 0</p>
                 </div>
                 <div class="p-4 text-center">
-                    <p class="text-[10px] font-bold text-ink-400 uppercase mb-1">HPP</p>
-                    <p id="laba-hpp" class="text-sm sm:text-lg font-extrabold text-ink-300 font-mono">Rp 0</p>
+                    <p class="text-[11px] font-bold uppercase mb-1" style="color:#64748b">HPP</p>
+                    <p id="laba-hpp" class="text-sm sm:text-lg font-extrabold font-mono" style="color:#475569">Rp 0</p>
                 </div>
                 <div class="p-4 text-center">
-                    <p class="text-[10px] font-bold text-ink-400 uppercase mb-1">Laba Kotor</p>
-                    <p id="laba-kotor" class="text-sm sm:text-lg font-extrabold text-emerald-600 font-mono">Rp 0</p>
-                    <p id="laba-margin" class="text-[10px] font-bold text-emerald-500">0% margin</p>
+                    <p class="text-[11px] font-bold uppercase mb-1" style="color:#64748b">Laba Kotor</p>
+                    <p id="laba-kotor" class="text-sm sm:text-lg font-extrabold text-emerald-700 font-mono">Rp 0</p>
+                    <p id="laba-margin" class="text-[11px] font-bold text-emerald-600">0% margin</p>
                 </div>
             </div>
             <div class="overflow-x-auto hide-scroll max-h-80 overflow-y-auto">
@@ -416,7 +504,7 @@
                 <p class="text-xs text-ink-300 font-medium">Audit trail — siapa mengubah apa &amp; kapan</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <select id="log-entitas" onchange="loadLogAktivitas()" class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold bg-ink-900">
+                <select id="log-entitas" onchange="loadLogAktivitas()" class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold" style="background:#fff;color:#1e293b">
                     <option value="">Semua Entitas</option>
                     <option value="produk">Produk</option>
                     <option value="user">User</option>
@@ -425,7 +513,7 @@
                     <option value="kategori">Kategori</option>
                     <option value="transaksi">Transaksi</option>
                 </select>
-                <button onclick="loadLogAktivitas()" class="bg-ink-950 text-white px-4 py-2 rounded-xl text-xs font-bold active:scale-95 transition"><i class="fas fa-rotate mr-1"></i>Muat Ulang</button>
+                <button onclick="loadLogAktivitas()" class="px-4 py-2 rounded-xl text-xs font-bold active:scale-95 transition" style="background:#1c2f61;color:#fff"><i class="fas fa-rotate mr-1" aria-hidden="true"></i>Muat Ulang</button>
             </div>
         </div>
 
@@ -452,9 +540,9 @@
                 <p class="text-xs text-ink-300 font-medium">Lihat detail, retur sebagian item, atau batalkan transaksi</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <input type="date" id="riwayat-dari" class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold bg-ink-900">
-                <input type="date" id="riwayat-sampai" class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold bg-ink-900">
-                <button onclick="loadRiwayatTransaksi()" class="bg-ink-950 text-white px-4 py-2 rounded-xl text-xs font-bold active:scale-95 transition"><i class="fas fa-rotate mr-1"></i>Muat Ulang</button>
+                <input type="date" id="riwayat-dari" class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold" style="background:#fff;color:#1e293b">
+                <input type="date" id="riwayat-sampai" class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold" style="background:#fff;color:#1e293b">
+                <button onclick="loadRiwayatTransaksi()" class="px-4 py-2 rounded-xl text-xs font-bold active:scale-95 transition" style="background:#1c2f61;color:#fff"><i class="fas fa-rotate mr-1" aria-hidden="true"></i>Muat Ulang</button>
             </div>
         </div>
 
@@ -963,9 +1051,9 @@
 </div>
 
 <!-- ===================== TOAST ===================== -->
-<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-ink-950 text-white px-4 py-3 rounded-2xl shadow-2xl text-sm font-bold flex items-center gap-3 transform -translate-y-32 transition-transform duration-300 z-[100] pointer-events-none max-w-[90vw]">
-    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center shrink-0"><i class="fas fa-info text-white text-xs" id="toast-icon"></i></div>
-    <span id="toast-msg" class="line-clamp-2">Pesan</span>
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-2xl shadow-2xl text-sm font-bold flex items-center gap-3 transform -translate-y-32 transition-transform duration-300 z-[100] pointer-events-none max-w-[90vw]" style="background:#0d1530;color:rgba(255,255,255,.95);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1)">
+    <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style="background:#2563eb"><i class="fas fa-info text-white text-xs" id="toast-icon"></i></div>
+    <span id="toast-msg" class="line-clamp-2" style="color:rgba(255,255,255,.95)">Pesan</span>
 </div>
 
 <script>
