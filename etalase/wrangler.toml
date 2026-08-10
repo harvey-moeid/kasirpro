@@ -62,7 +62,7 @@ STORE_TOKO_ID = "1"
 # dipakai. Ganti "domainanda.com" di bawah dengan domain asli Anda (harus
 # SAMA PERSIS dengan yang dipakai di kasire/wrangler.toml).
 routes = [
-  { pattern = "domainanda.com/*", zone_name = "domainanda.com" }
+  { pattern = "etalase.muidsoft.com/*", zone_name = "muidsoft.com" }
 ]
 
 [observability]

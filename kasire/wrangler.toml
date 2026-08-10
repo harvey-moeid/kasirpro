@@ -77,11 +77,11 @@ bucket_name = "kasirpro"
 #   JWT_SECRET=rahasia-panjang-acak-untuk-development-saja
 #
 [vars]
-# Sekarang kasire & etalase 1 domain yang SAMA (kasire di /kasir/*), jadi
-# secara teknis semua request same-origin — CORS ini cuma jaring pengaman
-# untuk akses langsung ke *.workers.dev saat testing/dev, bukan kebutuhan
-# utama lagi. Boleh dibiarkan seperti ini.
-ALLOWED_ORIGIN = "https://kasire.<subdomain-workers-anda>.workers.dev" # comma-separated, sesuaikan domain Anda
+# CORS — etalase & kasire 1 domain yang sama (same-origin) saat deploy,
+# tapi kasire juga bisa diakses langsung via kasirpro.muidsoft.com (subdomain
+# sendiri). Kedua domain diizinkan supaya cookie session & API calls bekerja
+# dari keduanya. Tidak perlu wildcard; list eksplisit lebih aman.
+ALLOWED_ORIGIN = "https://etalase.muidsoft.com,https://kasirpro.muidsoft.com"
 
 # Restriksi geografis (PRD Bagian 9). Set "false" saat masih testing dari luar
 # Indonesia, aktifkan ("true") saat sudah siap production.
@@ -109,8 +109,12 @@ mode = "smart"
 # (Custom Domain cuma bisa 1 domain = 1 worker, tidak bisa split per-path).
 # ==========================================================
 routes = [
-  { pattern = "domainanda.com/kasir", zone_name = "domainanda.com" },
-  { pattern = "domainanda.com/kasir/*", zone_name = "domainanda.com" }
+  # Path-based: kasire hidup di /kasir pada domain etalase (shared domain)
+  { pattern = "etalase.muidsoft.com/kasir", zone_name = "muidsoft.com" },
+  { pattern = "etalase.muidsoft.com/kasir/*", zone_name = "muidsoft.com" },
+  # Direct: kasire juga bisa diakses via subdomain sendiri (tanpa prefix /kasir)
+  # Kode di fetch() sudah menangani kedua skenario (dengan/tanpa prefix /kasir)
+  { pattern = "kasirpro.muidsoft.com/*", zone_name = "muidsoft.com" }
 ]
 
 
