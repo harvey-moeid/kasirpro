@@ -347,42 +347,33 @@ order_items (id, order_id FK CASCADE, produk_id FK NULL SET NULL, qty)
 
 ---
 
-## 7. BUG DITEMUKAN (hasil code review 2026-08-11)
+## 7. BUG DITEMUKAN & STATUS PERBAIKAN
 
-### 🔴 BUG KRITIS (harus diperbaiki sebelum production)
+### ✅ SUDAH DIPERBAIKI
 
-**B1 — Cross-tenant transaction oleh super_admin**
-- File: `kasire/src/index.ts`, baris 1615
-- Masalah: `const toko_id = session.toko_id ?? body.toko_id;`
-  Untuk super_admin, `session.toko_id` adalah null, jadi jatuh ke `body.toko_id`. Tapi `body.toko_id` TIDAK divalidasi via `validasiTokoIdMilikTenant`. Kalau super_admin tenant A tahu toko_id dan product_id tenant B (misal dari brute-force ID), bisa membuat transaksi di toko B dan menguras stok B.
-- Bandingkan dengan baris 563 (`POST /api/produk`) yang SUDAH pakai `validasiTokoIdMilikTenant`.
-- Fix: `const toko_id = session.toko_id ?? await validasiTokoIdMilikTenant(db, session, body.toko_id);`
+**B1 — Cross-tenant transaction oleh super_admin** *(kritis — fix 2026-08-12)*
+- File: `kasire/src/routes/transaksi.ts`
+- Root cause: `const toko_id = session.toko_id ?? body.toko_id;` — body.toko_id tidak divalidasi kepemilikan tenant.
+- Fix: Gunakan `validasiTokoIdMilikTenant(db, session, body.toko_id)` untuk super_admin, return 400 jika toko_id bukan milik tenant yang sama.
 
-### 🟠 BUG SEDANG
+**B2 — TOML inline comment masuk ke nilai string ALLOWED_ORIGIN** *(sedang — fix sebelumnya)*
+- File: `kasire/wrangler.toml`
+- Fix: ALLOWED_ORIGIN diganti domain real tanpa inline comment.
 
-**B2 — TOML inline comment masuk ke nilai string ALLOWED_ORIGIN**
-- File: `kasire/wrangler.toml`, baris 84
-- Masalah: `ALLOWED_ORIGIN = "https://kasire.xxx.workers.dev" # comma-separated, sesuaikan domain Anda`
-  Dalam format TOML, `#` di dalam string literal TIDAK diperlakukan sebagai komentar — nilainya termasuk teks `# comma-separated, sesuaikan domain Anda`. CORS akan selalu gagal karena origin tidak pernah cocok dengan string ini.
-- Fix: Pindahkan komentar ke baris terpisah di atas nilai.
+**B3 — stok-menipis ekspos harga_beli ke role kasir** *(sedang — fix 2026-08-12)*
+- File: `kasire/src/routes/transaksi.ts`, `GET /api/laporan/stok-menipis`
+- Fix: `SELECT p.*` diganti kolom eksplisit; `harga_beli` hanya disertakan jika `session.role !== 'kasir'`.
 
-**B3 — stok-menipis ekspos harga_beli ke role kasir**
-- File: `kasire/src/index.ts`, `GET /api/laporan/stok-menipis`
-- Masalah: Query pakai `SELECT p.*` yang menyertakan kolom `harga_beli` (harga pokok). Endpoint hanya butuh `requireAuth` (tanpa `requireRole`), sehingga kasir bisa melihat harga beli semua produk.
-- Fix: Ganti `p.*` dengan kolom spesifik, eksklusikan `harga_beli` untuk role kasir. ATAU tambah `requireRole('super_admin', 'admin_toko')`.
+**B5 — Retur: dua `db.batch()` terpisah (non-atomic)** *(minor — fix 2026-08-12)*
+- File: `kasire/src/routes/transaksi.ts`, `POST /:id/retur`
+- Fix: INSERT retur via `.run()` dulu untuk dapat `last_row_id`, lalu semua operasi sisanya (UPDATE stok/detail + INSERT retur_item) dalam **1 batch atomic**.
 
-### 🟡 BUG MINOR
+### 🟡 BUG MINOR (belum diperbaiki, dampak nol)
 
 **B4 — `storage_usage` tabel tidak pernah ditulis (dead table)**
 - File: `kasire/migrations/0001_init.sql`
-- Masalah: Tabel `storage_usage` dibuat dan di-seed dengan 1 row, tapi kode sekarang menghitung kuota R2 via `hitungTotalUkuranR2` (list R2 bucket langsung), bukan dari tabel ini. Tabel jadi dead weight.
-- Dampak: Nol (tidak mempengaruhi fungsionalitas), tapi membingungkan.
-
-**B5 — Retur: dua `db.batch()` terpisah (non-atomic)**
-- File: `kasire/src/index.ts`, sekitar baris 2236 & 2244
-- Masalah: Insert `retur` + update stok/detail dilakukan di batch pertama; insert `retur_item` di batch kedua. Jika proses mati di antaranya, ada baris `retur` tanpa `retur_item`.
-- Dampak: Sangat kecil (sinkron dalam 1 HTTP request), tapi bukan atomic sempurna.
-- Fix: D1 API saat ini tidak mendukung `RETURNING` untuk mendapat insertId dari batch — workaround: pakai `last_row_id` dari run() tunggal sebelum batch sisanya (refactor minor).
+- Masalah: Tabel dibuat & di-seed tapi kode menghitung kuota via `hitungTotalUkuranR2` (list R2 langsung). Tabel jadi dead weight.
+- Dampak: Nol (tidak mempengaruhi fungsionalitas). Bisa dihapus di migration berikutnya.
 
 ---
 
@@ -423,4 +414,4 @@ ENVIRONMENT=production
 1. Ganti semua password default
 2. Hapus/ganti produk contoh
 3. Update ALLOWED_ORIGIN dan ENFORCE_GEO
-4. Perbaiki B1 dan B2 di atas
+4. ✅ B1/B3/B5 sudah diperbaiki (2026-08-12) — B4 dead table, dampak nol

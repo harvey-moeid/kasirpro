@@ -161,14 +161,20 @@ transaksiRoutes.post('/', requireAuth, async (c) => {
   try {
     const body = await c.req.json<any>();
     const { offline_uuid, items, diskon = 0, pajak = 0 } = body;
-    const toko_id = session.toko_id ?? body.toko_id;
+    // FIX B1: super_admin punya session.toko_id = null, jatuh ke body.toko_id.
+    // Wajib validasi kepemilikan tenant — kalau tidak, super_admin tenant A
+    // bisa membuat transaksi di toko tenant B (cross-tenant attack).
+    const toko_id =
+      session.role === 'super_admin'
+        ? await validasiTokoIdMilikTenant(db, session, body.toko_id)
+        : session.toko_id;
     const kasir_id = session.uid;
 
     if (!Array.isArray(items) || items.length === 0) {
       return c.json({ success: false, error: 'Item transaksi kosong' }, 400);
     }
     if (!toko_id) {
-      return c.json({ success: false, error: 'toko_id tidak diketahui untuk user ini' }, 400);
+      return c.json({ success: false, error: 'toko_id wajib ditentukan/tidak valid untuk transaksi ini' }, 400);
     }
 
     // Validasi bentuk item
@@ -547,7 +553,19 @@ transaksiRoutes.post('/:id/retur', requireAuth, requireRole('super_admin', 'admi
       rencana.push({ detail, qtyRetur, subtotalReturItem });
     }
 
-    const stmts: any[] = [];
+    // FIX B5: sebelumnya 2 db.batch() terpisah — tidak atomic (kalau Worker
+    // mati di antaranya, retur header ada tapi retur_item kosong).
+    // Solusi: INSERT retur dulu via .run() untuk dapat last_row_id,
+    // lalu semua operasi lain (UPDATE + INSERT retur_item) dalam 1 batch.
+    const returRun = await db
+      .prepare('INSERT INTO retur (transaksi_id, toko_id, user_id, total_retur, alasan, metode_pengembalian) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(id, trx.toko_id, session.uid, totalRetur, alasan, metodePengembalian)
+      .run();
+    const returId = returRun.meta.last_row_id;
+
+    const stmts: any[] = [
+      db.prepare('UPDATE transaksi SET total_bayar=total_bayar-? WHERE id=?').bind(totalRetur, id),
+    ];
     for (const { detail, qtyRetur, subtotalReturItem } of rencana) {
       stmts.push(
         db.prepare('UPDATE detail_transaksi SET qty_retur=qty_retur+?, subtotal_retur=subtotal_retur+? WHERE id=?')
@@ -556,26 +574,14 @@ transaksiRoutes.post('/:id/retur', requireAuth, requireRole('super_admin', 'admi
         db.prepare(
           `INSERT INTO riwayat_stok (produk_id, jenis, jumlah, stok_sebelum, stok_sesudah, referensi, user_id)
            SELECT ?, 'masuk', ?, stok-?, stok, ?, ? FROM produk WHERE id=?`
-        ).bind(detail.produk_id, qtyRetur, qtyRetur, `Retur ${trx.kode_transaksi}`, session.uid, detail.produk_id)
-      );
-    }
-    stmts.push(
-      db.prepare('UPDATE transaksi SET total_bayar=total_bayar-? WHERE id=?').bind(totalRetur, id),
-      db.prepare(
-        'INSERT INTO retur (transaksi_id, toko_id, user_id, total_retur, alasan, metode_pengembalian) VALUES (?, ?, ?, ?, ?, ?)'
-      ).bind(id, trx.toko_id, session.uid, totalRetur, alasan, metodePengembalian)
-    );
-    await db.batch(stmts);
-
-    const returBaru = await db.prepare('SELECT id FROM retur WHERE transaksi_id = ? ORDER BY id DESC LIMIT 1').bind(id).first<any>();
-    await db.batch(
-      rencana.map(({ detail, qtyRetur, subtotalReturItem }) =>
+        ).bind(detail.produk_id, qtyRetur, qtyRetur, `Retur ${trx.kode_transaksi}`, session.uid, detail.produk_id),
         db.prepare(
           `INSERT INTO retur_item (retur_id, detail_transaksi_id, produk_id, nama_produk, qty, subtotal)
            VALUES (?, ?, ?, ?, ?, ?)`
-        ).bind(returBaru.id, detail.id, detail.produk_id, detail.nama_produk, qtyRetur, subtotalReturItem)
-      )
-    );
+        ).bind(returId, detail.id, detail.produk_id, detail.nama_produk, qtyRetur, subtotalReturItem),
+      );
+    }
+    await db.batch(stmts);
 
     await catatLog(
       db, session, 'retur', 'transaksi', trx.id,
@@ -724,7 +730,13 @@ laporanRoutes.get('/stok-menipis', requireAuth, async (c) => {
   const session = c.get('session');
   const ambang = Math.max(Number(c.req.query('ambang') ?? 10) || 10, 0);
 
-  let sql = `SELECT p.*, tk.nama as nama_toko FROM produk p JOIN toko tk ON tk.id = p.toko_id
+  // FIX B3: p.* menyertakan harga_beli (harga modal) — bocor ke role kasir.
+  // Ganti dengan kolom eksplisit: harga_beli hanya ditampilkan untuk admin.
+  const kolomHargaBeli = session.role === 'kasir' ? '' : ', p.harga_beli';
+  let sql = `SELECT p.id, p.toko_id, p.kategori_id, p.kode_produk, p.nama,
+                    p.harga_jual${kolomHargaBeli}, p.stok, p.satuan, p.gambar_url,
+                    p.is_active, p.slug, p.updated_at, tk.nama as nama_toko
+             FROM produk p JOIN toko tk ON tk.id = p.toko_id
              WHERE p.is_active = 1 AND p.stok <= ?`;
   const params: any[] = [ambang];
 
