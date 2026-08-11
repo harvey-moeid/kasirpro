@@ -170,18 +170,19 @@ Domain **harus jadi zone aktif di Cloudflare** (DNS dikelola Cloudflare) — buk
 
 ### Update `wrangler.toml` di kedua folder
 
-**`kasire/wrangler.toml`** — ganti `domainanda.com` dengan domain asli:
+**`kasire/wrangler.toml`** — ganti `etalase.muidsoft.com` dengan domain asli:
 ```toml
 routes = [
-  { pattern = "domainanda.com/kasir", zone_name = "domainanda.com" },
-  { pattern = "domainanda.com/kasir/*", zone_name = "domainanda.com" }
+  { pattern = "etalase.muidsoft.com/kasir", zone_name = "muidsoft.com" },
+  { pattern = "etalase.muidsoft.com/kasir/*", zone_name = "muidsoft.com" },
+  { pattern = "kasirpro.muidsoft.com/*", zone_name = "muidsoft.com" }
 ]
 ```
 
-**`etalase/wrangler.toml`** — ganti `domainanda.com` dengan domain yang sama:
+**`etalase/wrangler.toml`** — ganti dengan domain yang sama:
 ```toml
 routes = [
-  { pattern = "domainanda.com/*", zone_name = "domainanda.com" }
+  { pattern = "etalase.muidsoft.com/*", zone_name = "muidsoft.com" }
 ]
 ```
 
@@ -192,9 +193,10 @@ Deploy ulang keduanya setelah perubahan ini.
 Cloudflare otomatis pilih pattern paling spesifik:
 
 ```
-domainanda.com/kasir     → Worker kasirpro
-domainanda.com/kasir/*   → Worker kasirpro
-domainanda.com/*         → Worker etalasepro
+etalase.muidsoft.com/kasir     → Worker kasirpro
+etalase.muidsoft.com/kasir/*   → Worker kasirpro
+etalase.muidsoft.com/*         → Worker etalasepro
+kasirpro.muidsoft.com/*        → Worker kasirpro (akses langsung subdomain)
 ```
 
 `/kasir/*` selalu menang lawan `/*` — tidak saling tabrakan.
@@ -235,7 +237,20 @@ npx wrangler d1 execute kasirpro --remote --command \
 
 ---
 
-## 10. Perintah Operasional
+## 10. Checklist Go-Live
+
+Sebelum buka akses publik, pastikan semua ini sudah dilakukan:
+
+- [ ] Ganti password default `admin` dan `kasir1` (lihat bagian 9)
+- [ ] Hapus/ganti produk seed (Indomie, Kopi Kenangan, dll) via panel admin
+- [ ] Update `store_name` dan `wa_number` di Pengaturan → Etalase
+- [ ] Set `ENFORCE_GEO = "true"` di `kasire/wrangler.toml` → deploy ulang `cd kasire && npm run deploy`
+- [ ] Verifikasi `STORE_TOKO_ID` di `etalase/wrangler.toml` sudah sesuai toko yang benar
+- [ ] Tes transaksi end-to-end: buka shift → transaksi → tutup shift → laporan harian
+
+---
+
+## 11. Perintah Operasional
 
 | Kebutuhan | Command |
 |---|---|
@@ -250,7 +265,7 @@ npx wrangler d1 execute kasirpro --remote --command \
 
 ---
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 **Login selalu gagal (error 500)**  
 → `JWT_SECRET` belum diset. Jalankan `npx wrangler secret put JWT_SECRET` dari folder `kasire/`.
