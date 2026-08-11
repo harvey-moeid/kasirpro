@@ -17,20 +17,7 @@
   --gold-400: #dab86c;
   --gold-300: #e8cd8f;
   --gold-100: #f4e8cc;
-  /* Aksesibilitas: elemen hanya untuk screen reader, tidak terlihat secara visual */
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-
+  /* --paper dulu warna putih terang (kertas nota/kuitansi yang dibaca di
      siang hari). Sekarang jadi permukaan navy gelap ("nota di bawah lampu
      meja butik malam hari") -- nama variabel sengaja TIDAK diganti supaya
      seluruh rule di bawah & di admin.css otomatis ikut berubah. */
@@ -70,6 +57,18 @@
   --shadow-gold-glow: 0 0 0 1px rgba(var(--accent-rgb), 0.4), 0 8px 24px -6px rgba(var(--accent-rgb), 0.5);
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
