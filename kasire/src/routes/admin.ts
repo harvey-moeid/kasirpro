@@ -54,11 +54,23 @@ tokoRoutes.put('/:id', requireAuth, requireRole('super_admin'), async (c) => {
     const tokoId = await validasiTokoIdMilikTenant(db, session, id);
     if (!tokoId) return c.json({ success: false, error: 'Toko tidak ditemukan' }, 404);
 
-    await db
-      .prepare('UPDATE toko SET nama = ?, alamat = ? WHERE id = ?')
-      .bind(nama.trim(), alamat?.trim() ?? null, tokoId)
-      .run();
-    await catatLog(db, session, 'ubah', 'toko', tokoId, `Edit cabang "${nama.trim()}"`);
+    const namaBaru = nama.trim();
+
+    // Sync ke store_settings.store_name supaya nama di etalase publik ikut
+    // berubah ketika admin mengganti nama toko dari tab "Data Toko".
+    // Pakai batch: (1) update toko, (2) INSERT OR IGNORE baris store_settings
+    // kalau belum ada, (3) UPDATE store_name saja — field lain (wa_number,
+    // logo, dll.) tidak disentuh, jadi setting etalase lain tetap aman.
+    await db.batch([
+      db.prepare('UPDATE toko SET nama = ?, alamat = ? WHERE id = ?')
+        .bind(namaBaru, alamat?.trim() ?? null, tokoId),
+      db.prepare(
+        `INSERT INTO store_settings (toko_id, store_name) VALUES (?, ?)
+         ON CONFLICT(toko_id) DO UPDATE SET store_name = excluded.store_name`
+      ).bind(tokoId, namaBaru),
+    ]);
+
+    await catatLog(db, session, 'ubah', 'toko', tokoId, `Edit cabang "${namaBaru}"`);
     return c.json({ success: true });
   } catch {
     return c.json({ success: false, error: 'Gagal memperbarui data toko' }, 500);
