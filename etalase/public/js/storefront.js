@@ -40,6 +40,10 @@
     buyerName: document.getElementById("buyer-name"),
     buyerNote: document.getElementById("buyer-note"),
     checkoutBtn: document.getElementById("checkout-btn"),
+    heroSection: document.getElementById("hero-section"),
+    heroTagline: document.getElementById("hero-tagline"),
+    heroMetaRow: document.getElementById("hero-meta-row"),
+    heroCta: document.getElementById("hero-cta"),
     pdOverlay: document.getElementById("pd-overlay"),
     pdSheet: document.getElementById("pd-sheet"),
     storeInfoOverlay: document.getElementById("store-info-overlay"),
@@ -114,6 +118,31 @@
       } else {
         el.storeInfoWaBtn.style.display = "none";
       }
+      // Hero section — tampil bila description diisi tapi tidak ada banner image.
+      // Memperkenalkan toko dengan tagline + info operasional + CTA scroll ke produk.
+      if (settings.description && !settings.banner_image_key) {
+        el.heroTagline.textContent = settings.description;
+        const metaChips = [];
+        if (settings.operating_hours) {
+          metaChips.push(`<span class="hero-meta-chip">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>${escapeHtml(settings.operating_hours)}</span>`);
+        }
+        if (settings.address) {
+          metaChips.push(`<span class="hero-meta-chip">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>${escapeHtml(settings.address)}</span>`);
+        }
+        if (metaChips.length) el.heroMetaRow.innerHTML = metaChips.join("");
+        else el.heroMetaRow.style.display = "none";
+        el.heroSection.style.display = "";
+        el.heroCta.addEventListener("click", () => {
+          document.querySelector(".toolbar")?.scrollIntoView({ behavior: "smooth" });
+        });
+      }
+
       const hasBannerImage = !!settings.banner_image_key;
       const hasBannerText = !!(settings.banner_text && settings.banner_text.trim());
       if (hasBannerImage || hasBannerText) {
@@ -254,18 +283,34 @@
     return n >= 1000 ? `${(n / 1000).toFixed(1).replace(".0", "")}rb+ terjual` : `${n} terjual`;
   }
 
+  // Threshold terlaris: produk dengan sold_count >= 10 dapat badge emas.
+  const TERLARIS_THRESHOLD = 10;
+
+  // SVG placeholder — ikon tag belanja branded, jauh lebih rapi dari teks polos.
+  function placeholderSvg(name) {
+    return `<div class="placeholder" aria-label="Foto ${escapeHtml(name)} belum tersedia">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+        <line x1="7" y1="7" x2="7.01" y2="7"/>
+      </svg>
+      <span>Belum ada foto</span>
+    </div>`;
+  }
+
   function productCardHtml(p) {
     const qty = Cart.getQty(p.id);
     const soldOut = p.status === "sold_out";
     const img = imageUrl(p.image_key);
     const pct = discountPercent(p);
     const sold = soldText(p);
+    const isTerlaris = !soldOut && Number(p.sold_count) >= TERLARIS_THRESHOLD;
     return `
       <div class="product-card" data-open-id="${p.id}">
         <div class="product-thumb">
           ${soldOut ? '<span class="badge-soldout">Habis</span>' : ""}
+          ${isTerlaris ? '<span class="badge-terlaris">★ Terlaris</span>' : ""}
           ${pct ? `<span class="badge-discount">-${pct}%</span>` : ""}
-          ${img ? `<img src="${img}" alt="${escapeHtml(p.name)}" loading="lazy" />` : `<div class="placeholder">Tidak ada foto</div>`}
+          ${img ? `<img src="${img}" alt="${escapeHtml(p.name)}" loading="lazy" />` : placeholderSvg(p.name)}
         </div>
         <div class="product-info">
           ${p.category_name ? `<span class="product-cat">${escapeHtml(p.category_name)}</span>` : ""}
