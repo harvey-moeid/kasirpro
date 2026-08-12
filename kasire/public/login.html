@@ -90,6 +90,18 @@
             color: #fca5a5 !important;
         }
 
+        /* Mobile-first: hero compact, form muat tanpa scroll */
+        .login-hero {
+            flex: 0 0 auto !important;
+            padding-top: calc(var(--safe-top) + 2rem) !important;
+            padding-bottom: 1.5rem !important;
+        }
+        .login-hero .animate-float { margin-bottom: 0.875rem !important; }
+        .login-hero .animate-float > div { width: 72px !important; height: 72px !important; }
+        .login-hero h1 { font-size: 1.5rem !important; }
+        /* Sembunyikan dots dekoratif di mobile supaya lebih compact */
+        .login-hero .flex.gap-2.mt-6 { display: none !important; }
+
         @media (min-width: 1024px) {
             body { overflow: auto; display: flex; align-items: center; justify-content: center; }
             .login-card {
@@ -99,7 +111,16 @@
                 box-shadow: 0 30px 80px -20px rgba(0,0,0,.8),
                             0 0 0 1px rgba(255,255,255,.06);
             }
-            .login-hero { flex: 1 1 45%; padding-bottom: 0 !important; justify-content: center; }
+            .login-hero {
+                flex: 1 1 45% !important;
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+                justify-content: center !important;
+            }
+            .login-hero .animate-float { margin-bottom: 1.5rem !important; }
+            .login-hero .animate-float > div { width: 88px !important; height: 88px !important; }
+            .login-hero h1 { font-size: 1.875rem !important; }
+            .login-hero .flex.gap-2.mt-6 { display: flex !important; }
             .login-form-panel { flex: 1 1 55%; border-radius: 0 !important; border-top: none !important; border-left: 1px solid rgba(255,255,255,.07) !important; }
         }
 
@@ -144,7 +165,7 @@
 <div class="login-card flex flex-col w-full h-full">
 
     <!-- Hero area -->
-    <div class="login-hero flex-1 flex flex-col items-center justify-center pt-[var(--safe-top)] pb-10 text-white animate-fade-in z-0">
+    <div class="login-hero flex flex-col items-center justify-center text-white animate-fade-in z-0">
         <!-- Logo -->
         <div class="animate-float mb-6">
             <div class="w-22 h-22 rounded-3xl flex items-center justify-center p-4 relative" style="width:88px;height:88px;background:linear-gradient(135deg,#d6ac42,#a17423);box-shadow:0 12px 40px -8px rgba(162,116,35,.65),inset 0 1px 0 rgba(255,255,255,.2)">
