@@ -31,8 +31,12 @@
                 radial-gradient(ellipse at 20% 100%, rgba(59,130,246,.07) 0%, transparent 50%),
                 linear-gradient(160deg, #0b1428 0%, #05091c 60%);
             -webkit-tap-highlight-color: transparent;
-            overflow: hidden;
-            height: 100dvh;
+            /* Mobile: biarkan scroll kalau konten lebih tinggi dari viewport */
+            overflow-y: auto;
+            min-height: 100dvh;
+        }
+        .login-card {
+            min-height: 100dvh;
         }
         h1, h2 { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; }
 
@@ -97,7 +101,7 @@
             padding-bottom: 1.5rem !important;
         }
         .login-hero .animate-float { margin-bottom: 0.875rem !important; }
-        .login-hero .animate-float > div { width: 72px !important; height: 72px !important; }
+        #login-logo { width: 72px !important; height: 72px !important; }
         .login-hero h1 { font-size: 1.5rem !important; }
         /* Sembunyikan dots dekoratif di mobile supaya lebih compact */
         .login-hero .flex.gap-2.mt-6 { display: none !important; }
@@ -118,7 +122,7 @@
                 justify-content: center !important;
             }
             .login-hero .animate-float { margin-bottom: 1.5rem !important; }
-            .login-hero .animate-float > div { width: 88px !important; height: 88px !important; }
+            #login-logo { width: 88px !important; height: 88px !important; }
             .login-hero h1 { font-size: 1.875rem !important; }
             .login-hero .flex.gap-2.mt-6 { display: flex !important; }
             .login-form-panel { flex: 1 1 55%; border-radius: 0 !important; border-top: none !important; border-left: 1px solid rgba(255,255,255,.07) !important; }
@@ -161,21 +165,21 @@
         }
     </style>
 </head>
-<body class="w-screen flex flex-col justify-end" style="color:rgba(255,255,255,.9)">
-<div class="login-card flex flex-col w-full h-full">
+<body class="w-screen" style="color:rgba(255,255,255,.9)">
+<div class="login-card flex flex-col w-full" style="min-height:100dvh">
 
     <!-- Hero area -->
     <div class="login-hero flex flex-col items-center justify-center text-white animate-fade-in z-0">
         <!-- Logo -->
-        <div class="animate-float mb-6">
-            <div class="w-22 h-22 rounded-3xl flex items-center justify-center p-4 relative" style="width:88px;height:88px;background:linear-gradient(135deg,#d6ac42,#a17423);box-shadow:0 12px 40px -8px rgba(162,116,35,.65),inset 0 1px 0 rgba(255,255,255,.2)">
+        <div class="animate-float">
+            <div id="login-logo" class="rounded-3xl flex items-center justify-center p-4 relative" style="width:88px;height:88px;background:linear-gradient(135deg,#d6ac42,#a17423);box-shadow:0 12px 40px -8px rgba(162,116,35,.65),inset 0 1px 0 rgba(255,255,255,.2)">
                 <img src="icons/mark-white.svg" alt="KasirPro" class="w-full h-full">
                 <!-- Gold ring -->
                 <div class="absolute inset-0 rounded-3xl" style="border:1.5px solid rgba(214,172,66,.4);margin:-4px;border-radius:calc(1.5rem + 4px)"></div>
             </div>
         </div>
         <div class="flex items-center gap-2 mb-1.5">
-            <h1 id="login-title" class="text-3xl font-extrabold tracking-tight">KASIR PRO</h1>
+            <h1 id="login-title" class="font-extrabold tracking-tight">KASIR PRO</h1>
             <span class="text-[9px] font-black px-1.5 py-0.5 rounded-md tracking-widest" style="background:rgba(214,172,66,.15);border:1px solid rgba(214,172,66,.35);color:#d6ac42">PRO</span>
         </div>
         <p class="text-sm font-medium flex items-center gap-1.5" style="color:rgba(180,200,255,.78)">
@@ -191,7 +195,7 @@
     </div>
 
     <!-- Form panel -->
-    <main class="login-form-panel w-full rounded-t-[2rem] px-7 pt-8 pb-[calc(2rem+var(--safe-bottom))] relative z-10 animate-slide-up flex flex-col justify-center" style="box-shadow:0 -14px 50px -8px rgba(0,0,0,.7)">
+    <main class="login-form-panel flex-1 w-full rounded-t-[2rem] px-7 pt-8 pb-[calc(2rem+var(--safe-bottom))] relative z-10 animate-slide-up flex flex-col justify-center" style="box-shadow:0 -14px 50px -8px rgba(0,0,0,.7)">
 
         <h2 class="text-2xl font-extrabold mb-1" style="color:rgba(255,255,255,.95)">Selamat Datang</h2>
         <p class="text-sm font-medium mb-7" style="color:rgba(255,255,255,.6)">Masuk untuk memulai shift Anda.</p>
