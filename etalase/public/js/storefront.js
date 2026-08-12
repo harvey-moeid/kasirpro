@@ -388,8 +388,9 @@
       </div>`;
     renderPdAction(p);
     document.getElementById("pd-share-btn").addEventListener("click", () => shareProduct(p));
-    document.getElementById("pd-close-btn").addEventListener("click", () => el.pdOverlay.classList.remove("open"));
+    document.getElementById("pd-close-btn").addEventListener("click", () => closePdOverlay());
     el.pdOverlay.classList.add("open");
+    document.body.style.overflow = "hidden";
 
     // Ambil galeri foto tambahan di background (tidak menunda tampilan awal).
     fetchJSON(`/api/products/${p.id}`)
@@ -445,8 +446,12 @@
     });
   }
 
+  function closePdOverlay() {
+    el.pdOverlay.classList.remove("open");
+    document.body.style.overflow = "";
+  }
   el.pdOverlay.addEventListener("click", (e) => {
-    if (e.target === el.pdOverlay) el.pdOverlay.classList.remove("open");
+    if (e.target === el.pdOverlay) closePdOverlay();
   });
 
   // ---------- Cart drawer ----------
@@ -480,7 +485,7 @@
           <div class="cart-item-price">${i.qty} x ${formatRupiah(i.price)} = ${formatRupiah(i.qty * i.price)}</div>
           <button class="cart-item-remove" data-remove-id="${i.id}">Hapus</button>
         </div>
-        <div class="qty-stepper" style="height:30px">
+        <div class="qty-stepper" style="min-height:44px">
           <button data-cart-step="-1" data-cart-id="${i.id}">−</button>
           <span class="qty-value" style="min-width:20px">${i.qty}</span>
           <button data-cart-step="1" data-cart-id="${i.id}">+</button>
@@ -532,11 +537,15 @@
   function openDrawer() {
     el.drawerOverlay.classList.add("open");
     el.cartDrawer.classList.add("open");
+    // FIX: tanpa scroll lock, background page masih bisa di-scroll di iOS
+    // saat drawer terbuka — user scroll background tanpa sengaja.
+    document.body.style.overflow = "hidden";
     renderCart();
   }
   function closeDrawer() {
     el.drawerOverlay.classList.remove("open");
     el.cartDrawer.classList.remove("open");
+    document.body.style.overflow = "";
   }
   el.stickyCartBtn.addEventListener("click", openDrawer);
   el.drawerClose.addEventListener("click", closeDrawer);
@@ -567,12 +576,17 @@
         openDrawer();
       } else if (nav === "store") {
         el.storeInfoOverlay.classList.add("open");
+        document.body.style.overflow = "hidden";
       }
     });
   });
-  el.storeInfoClose.addEventListener("click", () => el.storeInfoOverlay.classList.remove("open"));
+  function closeStoreInfo() {
+    el.storeInfoOverlay.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  el.storeInfoClose.addEventListener("click", closeStoreInfo);
   el.storeInfoOverlay.addEventListener("click", (e) => {
-    if (e.target === el.storeInfoOverlay) el.storeInfoOverlay.classList.remove("open");
+    if (e.target === el.storeInfoOverlay) closeStoreInfo();
   });
 
   // ---------- Checkout ----------
