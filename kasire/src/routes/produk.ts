@@ -124,8 +124,9 @@ produk.post('/', requireAuth, requireRole('super_admin', 'admin_toko'), async (c
     return c.json({ success: true, id: result.meta.last_row_id }, 201);
   } catch (err: any) {
     const pesan = String(err.message ?? '');
+    // idx_produk_slug_per_toko = index baru (per toko_id) sejak migration 0003
     const msg = pesan.includes('idx_produk_slug')
-      ? 'Slug etalase sudah dipakai produk lain, ganti slug-nya'
+      ? 'Slug etalase sudah dipakai produk lain di toko ini, ganti slug-nya'
       : pesan.includes('UNIQUE') ? 'Kode produk/barcode sudah dipakai' : 'Gagal menambah produk';
     return c.json({ success: false, error: msg }, 400);
   }
@@ -193,8 +194,9 @@ produk.put('/:id', requireAuth, requireRole('super_admin', 'admin_toko'), async 
     );
     return c.json({ success: true });
   } catch (err: any) {
+    // idx_produk_slug_per_toko = index baru (per toko_id) sejak migration 0003
     const msg = String(err.message ?? '').includes('idx_produk_slug')
-      ? 'Slug etalase sudah dipakai produk lain, ganti slug-nya'
+      ? 'Slug etalase sudah dipakai produk lain di toko ini, ganti slug-nya'
       : 'Gagal mengubah produk';
     return c.json({ success: false, error: msg }, 400);
   }

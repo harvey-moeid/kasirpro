@@ -651,7 +651,10 @@ laporanRoutes.get('/produk-terlaris', requireAuth, async (c) => {
   return c.json({ success: true, data: results });
 });
 
-laporanRoutes.get('/laba', requireAuth, async (c) => {
+// FIX: laporan laba menyertakan HPP (harga modal) per produk — informasi
+// yang sensitif secara bisnis dan TIDAK boleh dilihat kasir. Tambahkan
+// requireRole guard yang sebelumnya tidak ada di endpoint ini.
+laporanRoutes.get('/laba', requireAuth, requireRole('super_admin', 'admin_toko'), async (c) => {
   const db = c.env.DB;
   const session = c.get('session');
   const { dari, sampai } = c.req.query();

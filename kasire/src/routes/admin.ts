@@ -275,8 +275,14 @@ etalaseRoutes.put('/settings', requireAuth, requireRole('super_admin', 'admin_to
     const TEMA_VALID = ['default', 'shopee', 'tiktokshop'];
     const tema = TEMA_VALID.includes(body.theme) ? body.theme : 'default';
 
-    await db
-      .prepare(
+    // FIX BUG: PUT /api/toko/:id sudah sync toko.nama → store_settings.store_name,
+    // tapi arah sebaliknya tidak ada. Kalau admin update store_name dari tab
+    // Etalase, toko.nama di tab Data Toko tidak ikut berubah — dua field diverge.
+    // Solusi: batch kedua operasi sekaligus (atomic).
+    // Catatan: hanya update toko.nama kalau store_name memang dikirim (tidak null).
+    const storeNameBaru = body.store_name ?? null;
+    const batchStmts: D1PreparedStatement[] = [
+      db.prepare(
         `INSERT INTO store_settings
            (toko_id, store_name, logo_key, wa_number, address, operating_hours,
             description, banner_text, banner_image_key, theme, checkout_message_template)
@@ -292,15 +298,23 @@ etalaseRoutes.put('/settings', requireAuth, requireRole('super_admin', 'admin_to
            banner_image_key         = excluded.banner_image_key,
            theme                    = excluded.theme,
            checkout_message_template= excluded.checkout_message_template`
-      )
-      .bind(
+      ).bind(
         tokoId,
-        body.store_name ?? null, body.logo_key ?? null, body.wa_number ?? null,
+        storeNameBaru, body.logo_key ?? null, body.wa_number ?? null,
         body.address ?? null, body.operating_hours ?? null, body.description ?? null,
         body.banner_text ?? null, body.banner_image_key ?? null,
         tema, body.checkout_message_template ?? null
-      )
-      .run();
+      ),
+    ];
+
+    // Sync balik ke toko.nama hanya kalau store_name dikirim dan tidak kosong
+    if (storeNameBaru?.trim()) {
+      batchStmts.push(
+        db.prepare(`UPDATE toko SET nama = ? WHERE id = ?`).bind(storeNameBaru.trim(), tokoId)
+      );
+    }
+
+    await db.batch(batchStmts);
 
     await catatLog(db, session, 'ubah', 'etalase_settings', tokoId, `Update pengaturan etalase toko id=${tokoId}`);
     return c.json({ success: true });
@@ -479,12 +493,36 @@ logRoutes.get('/', requireAuth, requireRole('super_admin', 'admin_toko'), async 
   const session = c.get('session');
   const limit = Math.min(Math.max(Number(c.req.query('limit') ?? 100) || 100, 1), 500);
 
-  let sql = `SELECT la.* FROM log_aktivitas la
-             WHERE la.toko_id IN (SELECT id FROM toko WHERE toko_pusat_id = ?)`;
-  const params: any[] = [session.toko_pusat_id];
+  // FIX BUG: super_admin punya toko_id = NULL, sehingga log mereka
+  // (toko_id NULL) tidak pernah cocok dengan IN (SELECT id FROM toko ...).
+  // Solusi: sertakan baris log milik tenant ini (via JOIN ke users untuk
+  // konfirmasi toko_pusat_id), DITAMBAH baris dengan toko_id IS NULL yang
+  // user_id-nya memang milik tenant yang sama.
+  //
+  // Untuk admin_toko: tetap filter hanya toko sendiri (toko_id = ?).
+  // Untuk super_admin: tampilkan log semua cabang tenant + log aksi
+  // super_admin sendiri (toko_id NULL, tapi toko_pusat_id-nya sama).
+  let sql: string;
+  const params: any[] = [];
 
-  if (session.role === 'admin_toko') { sql += ' AND la.toko_id = ?'; params.push(session.toko_id); }
-  sql += ' ORDER BY la.created_at DESC LIMIT ?'; params.push(limit);
+  if (session.role === 'admin_toko') {
+    sql = `SELECT la.* FROM log_aktivitas la
+           WHERE la.toko_id = ?
+           ORDER BY la.created_at DESC LIMIT ?`;
+    params.push(session.toko_id, limit);
+  } else {
+    // super_admin: log dari semua cabang tenant + log super_admin sendiri (toko_id NULL)
+    sql = `SELECT la.* FROM log_aktivitas la
+           WHERE (
+             la.toko_id IN (SELECT id FROM toko WHERE toko_pusat_id = ?)
+             OR (
+               la.toko_id IS NULL
+               AND la.user_id IN (SELECT id FROM users WHERE toko_pusat_id = ?)
+             )
+           )
+           ORDER BY la.created_at DESC LIMIT ?`;
+    params.push(session.toko_pusat_id, session.toko_pusat_id, limit);
+  }
 
   const { results } = await db.prepare(sql).bind(...params).all();
   return c.json({ success: true, data: results });
@@ -516,6 +554,11 @@ adminToolsRoutes.post('/reset-data', requireAuth, requireRole('super_admin', 'ad
         : session.toko_id;
     if (!tokoId) return c.json({ success: false, error: 'toko_id tidak valid' }, 400);
 
+    // FIX BUG: order_items merujuk produk_id; setelah orders dihapus,
+    // order_items menjadi orphan dan sold_count di storefront etalase kacau.
+    // Hapus order_items dulu (child), baru orders (parent).
+    // Log aktivitas: hanya hapus log berdasarkan toko_id (log super_admin
+    // yang toko_id=NULL dibiarkan — itu log lintas-cabang, bukan per-toko).
     await db.batch([
       db.prepare('DELETE FROM retur_item WHERE retur_id IN (SELECT id FROM retur WHERE toko_id = ?)').bind(tokoId),
       db.prepare('DELETE FROM retur WHERE toko_id = ?').bind(tokoId),
@@ -525,6 +568,9 @@ adminToolsRoutes.post('/reset-data', requireAuth, requireRole('super_admin', 'ad
       db.prepare('DELETE FROM transaksi WHERE toko_id = ?').bind(tokoId),
       db.prepare('DELETE FROM shift_kasir WHERE toko_id = ?').bind(tokoId),
       db.prepare('DELETE FROM log_aktivitas WHERE toko_id = ?').bind(tokoId),
+      // FIX: hapus riwayat pesanan WA toko ini beserta itemnya
+      db.prepare('DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE toko_id = ?)').bind(tokoId),
+      db.prepare('DELETE FROM orders WHERE toko_id = ?').bind(tokoId),
     ]);
 
     await catatLog(db, session, 'reset', 'transaksi', tokoId, `Reset semua data transaksi toko id=${tokoId}`);

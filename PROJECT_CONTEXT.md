@@ -73,7 +73,7 @@ kasirpro/
 
 ## 3. SKEMA DATABASE
 
-**Migration terakhir: `0002_login_ratelimit.sql`**
+**Migration terakhir: `0003_fixes.sql`** *(fix slug index global → per toko_id)*
 
 ### Tabel Utama
 
@@ -368,6 +368,31 @@ order_items (id, order_id FK CASCADE, produk_id FK NULL SET NULL, qty)
 - File: `kasire/src/routes/transaksi.ts`, `POST /:id/retur`
 - Fix: INSERT retur via `.run()` dulu untuk dapat `last_row_id`, lalu semua operasi sisanya (UPDATE stok/detail + INSERT retur_item) dalam **1 batch atomic**.
 
+**B6 — Slug produk UNIQUE global, bukan per-tenant** *(kritis — fix 2026-08-13)*
+- File: `kasire/migrations/0003_fixes.sql`
+- Root cause: `CREATE UNIQUE INDEX idx_produk_slug ON produk(slug)` → global lintas semua tenant. Slug 'kopi-susu' di Tenant A langsung bentrok dengan Tenant B.
+- Fix: DROP index lama, CREATE UNIQUE INDEX `idx_produk_slug_per_toko ON produk(toko_id, slug)`. Dalam 1 toko tetap unik, beda toko boleh sama.
+
+**B7 — Log aktivitas super_admin tidak pernah muncul** *(sedang — fix 2026-08-13)*
+- File: `kasire/src/routes/admin.ts`, `GET /api/log-aktivitas`
+- Root cause: `WHERE toko_id IN (SELECT id FROM toko ...)` — `NULL` tidak pernah cocok dengan `IN`, sehingga log aksi super_admin (toko_id=NULL) selalu hilang.
+- Fix: Query dipisah per-role. Super_admin: `toko_id IN (...)` OR `(toko_id IS NULL AND user_id IN (SELECT id FROM users WHERE toko_pusat_id = ?))`.
+
+**B8 — Reset data tidak hapus orders & order_items** *(sedang — fix 2026-08-13)*
+- File: `kasire/src/routes/admin.ts`, `POST /api/admin/reset-data`
+- Root cause: Batch DELETE tidak menyertakan tabel `orders`/`order_items`. Setelah reset, riwayat pesanan WA masih ada, `order_items` masih ada → `sold_count` storefront kacau.
+- Fix: Tambah 2 DELETE ke batch (`order_items` dulu karena child, baru `orders`).
+
+**B9 — Asimetri sync nama toko** *(minor — fix 2026-08-13)*
+- File: `kasire/src/routes/admin.ts`, `PUT /api/etalase/settings`
+- Root cause: `PUT /api/toko/:id` sudah sync `toko.nama → store_settings.store_name`, tapi `PUT /api/etalase/settings` tidak sync balik `store_settings.store_name → toko.nama`. Dua field bisa diverge.
+- Fix: Batch tambah `UPDATE toko SET nama = ?` saat `store_name` dikirim (tidak kosong).
+
+**B10 — Laporan laba bisa diakses role kasir** *(sedang — fix 2026-08-13)*
+- File: `kasire/src/routes/transaksi.ts`, `GET /api/laporan/laba`
+- Root cause: Tidak ada `requireRole` guard — kasir bisa lihat HPP (harga modal) semua produk.
+- Fix: Tambah `requireRole('super_admin', 'admin_toko')`.
+
 ### 🟡 BUG MINOR (belum diperbaiki, dampak nol)
 
 **B4 — `storage_usage` tabel tidak pernah ditulis (dead table)**
@@ -414,4 +439,6 @@ ENVIRONMENT=production
 1. Ganti semua password default
 2. Hapus/ganti produk contoh
 3. Update ALLOWED_ORIGIN dan ENFORCE_GEO
-4. ✅ B1/B3/B5 sudah diperbaiki (2026-08-12) — B4 dead table, dampak nol
+4. ✅ B1/B3/B5 sudah diperbaiki (2026-08-12)
+5. ✅ B6/B7/B8/B9/B10 sudah diperbaiki (2026-08-13) — jalankan migration 0003 sebelum deploy
+6. B4 dead table, dampak nol (bisa diabaikan)
