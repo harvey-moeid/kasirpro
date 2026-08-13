@@ -93,11 +93,14 @@
 
     /* Semua input/select/textarea di admin perlu bg eksplisit agar
        tidak tergantung browser default (bisa rusak di dark mode) */
-    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]),
+    /* FIX: iOS Safari auto-zoom input focused kalau font-size < 16px.
+       Set font-size minimum 16px global untuk semua form controls. */
+    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
     select,
     textarea {
         background-color: #fff !important;
         color: #1e293b !important;
+        font-size: max(16px, 1em) !important;
     }
     input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):focus,
     select:focus,
@@ -232,11 +235,11 @@
             <div class="flex flex-wrap items-end gap-2">
                 <div>
                     <label class="block text-[11px] font-bold uppercase mb-1" style="color:#64748b">Dari</label>
-                    <input type="date" id="rep-dari" class="border border-ink-700 rounded-lg px-2 py-1.5 text-xs font-bold" style="background:#fff;color:#1e293b">
+                    <input type="date" id="rep-dari" class="border border-ink-700 rounded-lg px-2 py-1.5 text-xs font-bold" style="background:#fff;color:#1e293b;font-size:16px">
                 </div>
                 <div>
                     <label class="block text-[11px] font-bold uppercase mb-1" style="color:#64748b">Sampai</label>
-                    <input type="date" id="rep-sampai" class="border border-ink-700 rounded-lg px-2 py-1.5 text-xs font-bold" style="background:#fff;color:#1e293b">
+                    <input type="date" id="rep-sampai" class="border border-ink-700 rounded-lg px-2 py-1.5 text-xs font-bold" style="background:#fff;color:#1e293b;font-size:16px">
                 </div>
                 <button onclick="loadDashboard()" class="px-4 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition h-fit" style="background:#1c2f61;color:#fff"><i class="fas fa-rotate mr-1" aria-hidden="true"></i>Muat Ulang</button>
                 <button onclick="exportLaporanExcel()" class="bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition h-fit shadow-md shadow-emerald-200"><i class="fas fa-file-excel mr-1.5"></i>Export Excel</button>
@@ -285,7 +288,7 @@
                     <span class="text-[10px] text-ink-400 font-bold">berdasarkan qty terjual</span>
                 </div>
                 <div class="overflow-x-auto hide-scroll max-h-80 overflow-y-auto">
-                    <table class="w-full text-xs">
+                    <table class="rtable w-full text-xs">
                         <thead><tr class="text-ink-400 font-bold uppercase text-[10px]">
                             <th class="text-left px-4 py-2">Produk</th><th class="text-right px-4 py-2">Qty</th><th class="text-right px-4 py-2">Omzet</th>
                         </tr></thead>
@@ -300,11 +303,11 @@
                     <h3 class="font-bold text-sm"><i class="fas fa-triangle-exclamation text-red-500 mr-1.5"></i>Stok Menipis</h3>
                     <div class="flex items-center gap-1.5">
                         <span class="text-[10px] text-ink-400 font-bold">ambang</span>
-                        <input type="number" id="ambang-stok" value="10" min="0" class="w-14 border border-ink-700 rounded-lg px-2 py-1 text-xs font-bold" onchange="loadStokMenipis()">
+                        <input type="number" id="ambang-stok" value="10" min="0" class="w-14 border border-ink-700 rounded-lg px-2 py-1 text-xs font-bold" style="font-size:16px" onchange="loadStokMenipis()">
                     </div>
                 </div>
                 <div class="overflow-x-auto hide-scroll max-h-80 overflow-y-auto">
-                    <table class="w-full text-xs">
+                    <table class="rtable w-full text-xs">
                         <thead><tr class="text-ink-400 font-bold uppercase text-[10px]">
                             <th class="text-left px-4 py-2">Produk</th><th class="text-right px-4 py-2">Stok</th><th class="text-right px-4 py-2">Kode</th>
                         </tr></thead>
@@ -336,7 +339,7 @@
                 </div>
             </div>
             <div class="overflow-x-auto hide-scroll max-h-80 overflow-y-auto">
-                <table class="w-full text-xs">
+                <table class="rtable w-full text-xs">
                     <thead><tr class="text-ink-400 font-bold uppercase text-[10px]">
                         <th class="text-left px-4 py-2">Produk</th><th class="text-right px-4 py-2">Qty</th><th class="text-right px-4 py-2">Omzet</th><th class="text-right px-4 py-2">HPP</th><th class="text-right px-4 py-2">Laba</th>
                     </tr></thead>
@@ -540,8 +543,8 @@
                 <p class="text-xs text-ink-300 font-medium">Lihat detail, retur sebagian item, atau batalkan transaksi</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <input type="date" id="riwayat-dari" class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold" style="background:#fff;color:#1e293b">
-                <input type="date" id="riwayat-sampai" class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold" style="background:#fff;color:#1e293b">
+                <input type="date" id="riwayat-dari" class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold" style="background:#fff;color:#1e293b;font-size:16px">
+                <input type="date" id="riwayat-sampai" class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold" style="background:#fff;color:#1e293b;font-size:16px">
                 <button onclick="loadRiwayatTransaksi()" class="px-4 py-2 rounded-xl text-xs font-bold active:scale-95 transition" style="background:#1c2f61;color:#fff"><i class="fas fa-rotate mr-1" aria-hidden="true"></i>Muat Ulang</button>
             </div>
         </div>
@@ -728,7 +731,7 @@
                 <p class="text-xs text-ink-300 font-medium">Tambah, ubah, nonaktifkan, dan koreksi stok</p>
             </div>
             <div class="flex gap-2 w-full sm:w-auto">
-                <input type="text" id="produk-search" placeholder="Cari nama/kode..." class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold flex-1 sm:flex-none sm:w-48" oninput="renderProdukTable()">
+                <input type="text" id="produk-search" placeholder="Cari nama/kode..." class="border border-ink-700 rounded-xl px-3 py-2 text-xs font-bold flex-1 sm:flex-none sm:w-48" style="font-size:16px" oninput="renderProdukTable()">
                 <button onclick="scanUntukTambahProduk()" class="shrink-0 bg-ink-900 border border-ink-700 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold active:scale-95 transition"><i class="fas fa-barcode mr-1.5"></i><span class="hidden sm:inline">Scan untuk Tambah</span><span class="sm:hidden">Scan</span></button>
                 <button onclick="openProdukModal()" class="shrink-0 bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold active:scale-95 transition shadow-md shadow-blue-200"><i class="fas fa-plus mr-1.5"></i><span class="hidden sm:inline">Tambah Produk</span><span class="sm:hidden">Tambah</span></button>
             </div>
@@ -851,7 +854,7 @@
                              (cuma tooltip "Please enter a URL"), jadi foto ke-upload tapi produk
                              gagal tersimpan. type="text" tetap terima URL eksternal maupun path
                              relatif dari R2, dan validasi format tetap dilakukan di submitProduk(). -->
-                        <input type="text" inputmode="url" id="produk-gambar" placeholder="atau tempel URL gambar https://..." class="w-full border border-ink-700 rounded-xl px-3 py-2.5 text-xs font-bold" oninput="previewProdukGambar()">
+                        <input type="text" inputmode="url" id="produk-gambar" placeholder="atau tempel URL gambar https://..." class="w-full border border-ink-700 rounded-xl px-3 py-2.5 text-xs font-bold" style="font-size:16px" oninput="previewProdukGambar()">
                     </div>
                 </div>
                 <p class="text-[10px] text-ink-400 font-medium mt-1">JPG/PNG/WEBP, maks 2MB (otomatis dikompres di perangkat sebelum upload). Kosongkan jika tidak ada — kasir akan tampilkan ikon default.</p>
@@ -1745,9 +1748,9 @@ async function loadProdukTerlaris() {
         }
         tbody.innerHTML = data.data.map(p => `
             <tr class="border-t border-ink-800">
-                <td class="px-4 py-2.5 font-bold text-ink-100">${escapeHtml(p.nama_produk)}</td>
-                <td class="px-4 py-2.5 text-right font-mono">${p.total_qty}</td>
-                <td class="px-4 py-2.5 text-right font-mono text-blue-600 font-bold">${formatRp(p.total_omzet)}</td>
+                <td data-label="Produk" class="px-4 py-2.5 font-bold text-ink-100">${escapeHtml(p.nama_produk)}</td>
+                <td data-label="Qty" class="px-4 py-2.5 text-right font-mono">${p.total_qty}</td>
+                <td data-label="Omzet" class="px-4 py-2.5 text-right font-mono text-blue-600 font-bold">${formatRp(p.total_omzet)}</td>
             </tr>`).join('');
     } catch (e) { showToast(e.message, 'error'); }
 }
@@ -1774,11 +1777,11 @@ async function loadLaporanLaba() {
         }
         tbody.innerHTML = rows.map(p => `
             <tr class="border-t border-ink-800">
-                <td class="px-4 py-2.5 font-bold text-ink-100">${escapeHtml(p.nama_produk)}</td>
-                <td class="px-4 py-2.5 text-right font-mono">${p.total_qty}</td>
-                <td class="px-4 py-2.5 text-right font-mono text-blue-600">${formatRp(p.omzet)}</td>
-                <td class="px-4 py-2.5 text-right font-mono text-ink-400">${formatRp(p.hpp)}</td>
-                <td class="px-4 py-2.5 text-right font-mono font-bold ${p.laba_kotor >= 0 ? 'text-emerald-600' : 'text-red-600'}">${formatRp(p.laba_kotor)}</td>
+                <td data-label="Produk" class="px-4 py-2.5 font-bold text-ink-100">${escapeHtml(p.nama_produk)}</td>
+                <td data-label="Qty" class="px-4 py-2.5 text-right font-mono">${p.total_qty}</td>
+                <td data-label="Omzet" class="px-4 py-2.5 text-right font-mono text-blue-600">${formatRp(p.omzet)}</td>
+                <td data-label="HPP" class="px-4 py-2.5 text-right font-mono text-ink-400">${formatRp(p.hpp)}</td>
+                <td data-label="Laba" class="px-4 py-2.5 text-right font-mono font-bold ${p.laba_kotor >= 0 ? 'text-emerald-600' : 'text-red-600'}">${formatRp(p.laba_kotor)}</td>
             </tr>`).join('');
     } catch (e) { showToast(e.message, 'error'); }
 }
@@ -1794,9 +1797,9 @@ async function loadStokMenipis() {
         }
         tbody.innerHTML = data.data.map(p => `
             <tr class="border-t border-ink-800">
-                <td class="px-4 py-2.5 font-bold text-ink-100">${escapeHtml(p.nama)}</td>
-                <td class="px-4 py-2.5 text-right font-mono ${p.stok <= 0 ? 'text-red-600 font-bold' : 'text-orange-600 font-bold'}">${p.stok}</td>
-                <td class="px-4 py-2.5 text-right font-mono text-ink-400">${escapeHtml(p.kode_produk)}</td>
+                <td data-label="Produk" class="px-4 py-2.5 font-bold text-ink-100">${escapeHtml(p.nama)}</td>
+                <td data-label="Stok" class="px-4 py-2.5 text-right font-mono ${p.stok <= 0 ? 'text-red-600 font-bold' : 'text-orange-600 font-bold'}">${p.stok}</td>
+                <td data-label="Kode" class="px-4 py-2.5 text-right font-mono text-ink-400">${escapeHtml(p.kode_produk)}</td>
             </tr>`).join('');
     } catch (e) { showToast(e.message, 'error'); }
 }
