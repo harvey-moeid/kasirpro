@@ -201,6 +201,9 @@ settingsRoutes.get('/', async (c) => {
 
   const settings: Record<string, string> = { ...STRUK_SETTING_DEFAULTS };
   for (const row of results) settings[row.key] = row.value;
+  // FIX: tanpa no-store, perubahan app_title di admin tidak langsung
+  // terlihat di halaman login (browser pakai cached response lama).
+  c.header('Cache-Control', 'no-store');
   return c.json({ success: true, data: settings });
 });
 
@@ -257,6 +260,9 @@ etalaseRoutes.get('/settings', requireAuth, async (c) => {
   if (!toko_id) return c.json({ success: false, error: 'toko_id wajib ditentukan' }, 400);
 
   const row = await db.prepare('SELECT * FROM store_settings WHERE toko_id = ?').bind(toko_id).first();
+  // FIX: tanpa no-store, form etalase di admin bisa load data lama dari
+  // cache setelah ada perubahan di toko lain atau di session berbeda.
+  c.header('Cache-Control', 'no-store');
   return c.json({ success: true, data: row ?? null });
 });
 

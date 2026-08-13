@@ -25,6 +25,17 @@ app.route("/api/settings", settings);
 app.route("/api/orders", orders);
 app.route("/images", images);
 
+// FIX: semua /api/* endpoint mengembalikan data mutable (produk, stok, harga,
+// nama toko, kategori) yang bisa berubah kapan saja dari kasire admin.
+// Tanpa Cache-Control, browser HTTP cache menyimpan response → data lama
+// tetap tampil meski sudah diupdate di admin (nama toko, harga, stok habis, dll).
+// Middleware ini dijalankan SETELAH route handler, jadi header ditambahkan
+// ke semua response /api/* tanpa mengganggu logika masing-masing route.
+app.use("/api/*", async (c, next) => {
+  await next();
+  c.header("Cache-Control", "no-store");
+});
+
 app.get("/api/health", (c) => c.json({ ok: true, env: c.env.ENVIRONMENT }));
 
 // Semua request lain (HTML/CSS/JS statis) ditangani oleh Workers Assets
