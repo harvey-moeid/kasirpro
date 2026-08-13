@@ -84,7 +84,10 @@
   // ---------- Load initial data ----------
   async function loadSettings() {
     try {
-      const { settings } = await fetchJSON("/api/settings");
+      // FIX: fetch dengan cache:'no-store' supaya browser tidak pakai
+      // cached response lama. Tanpa ini, update nama toko dari admin
+      // tidak langsung terlihat di storefront sampai user hard-refresh.
+      const { settings } = await fetchJSON("/api/settings", { cache: "no-store" });
       state.settings = settings;
       document.documentElement.dataset.theme = settings.theme || "default";
       el.storeName.textContent = settings.store_name || "Toko Saya";

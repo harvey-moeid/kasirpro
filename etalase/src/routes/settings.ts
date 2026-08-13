@@ -16,6 +16,12 @@ const settings = new Hono<{ Bindings: Env; Variables: Variables }>();
 // buka tab Etalase di admin), fallback ke nama dari tabel toko supaya
 // storefront.js tidak menerima null dan crash di settings.theme dll.
 settings.get("/", async (c) => {
+  // FIX: tanpa Cache-Control, browser cache response ini agresif.
+  // Saat admin update nama/pengaturan toko, storefront masih tampilkan
+  // data lama dari cache sampai user hard-refresh.
+  // no-store = tidak pernah disimpan di cache browser maupun CDN.
+  c.header("Cache-Control", "no-store");
+
   const row = await c.env.DB.prepare(
     `SELECT ss.*, COALESCE(ss.store_name, t.nama, 'Toko Saya') AS store_name
      FROM toko t
@@ -23,9 +29,6 @@ settings.get("/", async (c) => {
      WHERE t.id = ?`
   ).bind(c.env.STORE_TOKO_ID).first();
 
-  // Kalau toko_id tidak ada di DB sama sekali (mis. STORE_TOKO_ID salah
-  // konfigurasi), kembalikan objek minimal daripada null agar storefront
-  // tidak crash.
   if (!row) {
     return c.json({ settings: { store_name: "Toko Saya", theme: "default", wa_number: "" } });
   }
