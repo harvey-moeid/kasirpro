@@ -2664,6 +2664,14 @@ async function submitProduk(e) {
     }
     if (!id) payload.stok = Number(document.getElementById('produk-stok').value) || 0;
 
+    // Validasi sisi client sebelum kirim ke server
+    if (!payload.kode_produk || !payload.nama) { showToast('Kode dan nama produk wajib diisi', 'error'); return; }
+    if (!payload.harga_jual || payload.harga_jual <= 0) { showToast('Harga jual harus lebih dari 0', 'error'); return; }
+    if (payload.harga_coret && payload.harga_coret < payload.harga_jual) {
+        showToast('Harga coret harus ≥ harga jual (harga coret = harga asli sebelum diskon)', 'error');
+        return;
+    }
+
     try {
         if (id) {
             await api(`/api/produk/${id}`, { method: 'PUT', body: JSON.stringify(payload) });

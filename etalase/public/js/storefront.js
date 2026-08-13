@@ -92,6 +92,32 @@
       document.documentElement.dataset.theme = settings.theme || "default";
       el.storeName.textContent = settings.store_name || "Toko Saya";
       document.title = settings.store_name || "Etalase Toko";
+
+      // FIX: update Open Graph & Twitter Card meta tags secara dinamis
+      // supaya saat link di-share via WA/sosmed, preview menampilkan
+      // nama & deskripsi toko yang benar (bukan placeholder default HTML).
+      const ogTitle = document.getElementById("og-title");
+      const ogDesc = document.getElementById("og-description");
+      const ogUrl = document.getElementById("og-url");
+      const ogImage = document.getElementById("og-image");
+      const twTitle = document.getElementById("tw-title");
+      const twDesc = document.getElementById("tw-description");
+      const twImage = document.getElementById("tw-image");
+      const storeName = settings.store_name || "Toko Kami";
+      const storeDesc = settings.description || "Lihat produk kami dan pesan langsung lewat WhatsApp.";
+      if (ogTitle) ogTitle.content = storeName;
+      if (ogDesc) ogDesc.content = storeDesc;
+      if (ogUrl) ogUrl.content = location.href;
+      if (twTitle) twTitle.content = storeName;
+      if (twDesc) twDesc.content = storeDesc;
+      // Logo toko jadi og:image kalau ada
+      if (settings.logo_key) {
+        const logoUrl = /^https?:\/\//.test(settings.logo_key)
+          ? settings.logo_key
+          : `${location.origin}/images/${settings.logo_key}`;
+        if (ogImage) ogImage.content = logoUrl;
+        if (twImage) twImage.content = logoUrl;
+      }
       const metaParts = [];
       if (settings.operating_hours) metaParts.push(settings.operating_hours);
       if (settings.address) metaParts.push(settings.address);
@@ -199,6 +225,9 @@
         state.activeCategory = btn.dataset.slug;
         renderChips();
         loadProducts();
+        // FIX: sync bottom nav active state dengan pilihan kategori.
+        // "Semua" → highlight icon Beranda, kategori spesifik → highlight Kategori.
+        setActiveNav(btn.dataset.slug === "" ? "home" : "category");
       });
     });
   }
@@ -574,7 +603,9 @@
       } else if (nav === "category") {
         el.categoryChips.scrollIntoView({ behavior: "smooth", block: "center" });
         setActiveNav("category");
-        setTimeout(() => setActiveNav("home"), 1200);
+        // FIX: jangan reset active nav ke "home" setelah timeout.
+        // User tap Kategori → filter produk aktif → nav Kategori harus tetap highlight.
+        // Reset hanya terjadi kalau user navigasi ke tab lain secara eksplisit.
       } else if (nav === "cart") {
         openDrawer();
       } else if (nav === "store") {

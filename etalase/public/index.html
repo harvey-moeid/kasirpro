@@ -9,6 +9,22 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <!-- Open Graph — preview saat link di-share via WhatsApp / sosmed.
+       Nilai og:title & og:description diupdate via JS setelah settings loaded
+       (el.ogTitle.content = settings.store_name, dst) supaya per-toko. -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="KasirPro Etalase" />
+  <meta id="og-title" property="og:title" content="Toko Kami" />
+  <meta id="og-description" property="og:description" content="Lihat produk kami dan pesan langsung lewat WhatsApp." />
+  <meta id="og-url" property="og:url" content="" />
+  <meta id="og-image" property="og:image" content="" />
+  <!-- Twitter Card (WA dan banyak platform juga baca ini sebagai fallback) -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta id="tw-title" name="twitter:title" content="Toko Kami" />
+  <meta id="tw-description" name="twitter:description" content="Lihat produk kami dan pesan langsung lewat WhatsApp." />
+  <meta id="tw-image" name="twitter:image" content="" />
+
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
