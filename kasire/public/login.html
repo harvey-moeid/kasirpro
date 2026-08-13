@@ -54,6 +54,14 @@
             max-width: 100%;
             overflow-x: hidden;
         }
+        /* Clip semua child agar tidak ada yang bisa overflow ke kiri/kanan */
+        .login-hero,
+        .login-form-panel {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
         h1, h2 { font-family: 'Sora', 'Plus Jakarta Sans', sans-serif; }
 
         #btn-loader.hidden { display: none !important; }
@@ -202,8 +210,8 @@
         <div class="animate-float">
             <div id="login-logo" class="rounded-3xl flex items-center justify-center p-4 relative" style="width:88px;height:88px;background:linear-gradient(135deg,#d6ac42,#a17423);box-shadow:0 12px 40px -8px rgba(162,116,35,.65),inset 0 1px 0 rgba(255,255,255,.2)">
                 <img src="icons/mark-white.svg" alt="KasirPro" class="w-full h-full">
-                <!-- Gold ring -->
-                <div class="absolute inset-0 rounded-3xl" style="border:1.5px solid rgba(214,172,66,.4);margin:-4px;border-radius:calc(1.5rem + 4px)"></div>
+                <!-- Gold ring — pakai outline bukan margin negatif agar tidak trigger overflow -->
+                <div class="absolute inset-0 rounded-3xl" style="outline:1.5px solid rgba(214,172,66,.4);outline-offset:4px;border-radius:calc(1.5rem + 4px)"></div>
             </div>
         </div>
         <div class="flex items-center gap-2 mb-1.5">

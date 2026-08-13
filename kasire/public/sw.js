@@ -1,4 +1,4 @@
-const CACHE_NAME = "kasir-cloud-shell-v23"; // dinaikkan: brand assets muidsoft ditambahkan ke APP_SHELL
+const CACHE_NAME = "kasir-cloud-shell-v24"; // dinaikkan: fix overflow horizontal login & kasir (html overflow-x, w-screen→w-full, slideUp anim)
 
 const APP_SHELL = [
   "login.html",
