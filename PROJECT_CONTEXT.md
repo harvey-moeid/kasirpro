@@ -393,6 +393,26 @@ order_items (id, order_id FK CASCADE, produk_id FK NULL SET NULL, qty)
 - Root cause: Tidak ada `requireRole` guard — kasir bisa lihat HPP (harga modal) semua produk.
 - Fix: Tambah `requireRole('super_admin', 'admin_toko')`.
 
+**B11 — Bottom nav Kategori etalase di-reset ke Beranda setelah 1200ms** *(minor — fix 2026-08-13)*
+- File: `etalase/public/js/storefront.js`
+- Root cause: `setTimeout(() => setActiveNav("home"), 1200)` di handler tap Kategori — icon aktif sebentar lalu balik sendiri.
+- Fix: Hapus setTimeout, sync `setActiveNav` dengan chip yang diklik (`""` = home, lainnya = category).
+
+**B12 — Tidak ada Open Graph / Twitter Card meta tags di etalase** *(minor — fix 2026-08-13)*
+- File: `etalase/public/index.html`, `etalase/public/js/storefront.js`
+- Root cause: Link etalase di-share via WA/sosmed tidak punya preview nama/deskripsi/logo toko.
+- Fix: Tambah og:title, og:description, og:image, og:url + update dinamis dari JS setelah settings loaded.
+
+**B13 — `submitProduk` tidak validasi harga_jual > 0 dan harga_coret >= harga_jual** *(minor — fix 2026-08-13)*
+- File: `kasire/public/admin.html`
+- Root cause: Bisa simpan produk dengan harga 0, atau harga coret < harga jual (logically terbalik).
+- Fix: Validasi client-side sebelum API call dengan pesan error eksplisit.
+
+**B14 — Koreksi stok manual bisa hasilkan stok negatif** *(sedang — fix 2026-08-13)*
+- File: `kasire/src/routes/produk.ts`, `kasire/public/admin.html`
+- Root cause: `POST /api/produk/:id/koreksi-stok` tidak memvalidasi `stokSesudah >= 0`. Admin bisa input `-999` pada produk stok 5 → stok jadi `-994`, laporan kacau.
+- Fix: Server guard `stokSesudah < 0` → 400 + pesan eksplisit. Client validasi sebelum submit.
+
 ### 🟡 BUG MINOR (belum diperbaiki, dampak nol)
 
 **B4 — `storage_usage` tabel tidak pernah ditulis (dead table)**
@@ -440,10 +460,11 @@ ENVIRONMENT=production
 2. Hapus/ganti produk contoh
 3. Update ALLOWED_ORIGIN dan ENFORCE_GEO
 4. ✅ B1/B3/B5 sudah diperbaiki (2026-08-12)
-5. ✅ B6/B7/B8/B9/B10 sudah diperbaiki (2026-08-13) — **jalankan migration 0003 sebelum deploy**
+5. ✅ B6–B10 sudah diperbaiki (2026-08-13) — **jalankan migration 0003 sebelum deploy**
 6. ✅ Mobile UX: toolbar warna, body scroll lock, iOS zoom, touch target (2026-08-13)
 7. ✅ Desktop login card terpotong kanan-kiri — fixed (2026-08-13)
 8. ✅ Nama toko header etalase overflow — fixed (2026-08-13)
 9. ✅ Nama toko tidak update di storefront (HTTP cache) — fixed (2026-08-13)
 10. ✅ Cache-Control no-store semua API mutable — fixed (2026-08-13)
-11. B4 dead table `storage_usage`, dampak nol (bisa diabaikan)
+11. ✅ B11–B14 (nav reset, OG tags, validasi harga, stok negatif) — fixed (2026-08-13)
+12. B4 dead table `storage_usage`, dampak nol (bisa diabaikan)
