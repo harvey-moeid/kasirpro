@@ -2716,6 +2716,18 @@ async function submitKoreksiStok(e) {
     const alasan = document.getElementById('koreksi-alasan').value.trim();
     if (!jumlah) { showToast('Jumlah koreksi tidak boleh 0', 'error'); return; }
 
+    // FIX: validasi client-side agar stok hasil tidak negatif.
+    // Tanpa ini, error baru muncul dari server setelah request dikirim —
+    // padahal bisa dicegah lebih awal dengan pesan yang lebih jelas.
+    const produk = produkList.find(x => String(x.id) === String(id));
+    if (produk) {
+        const stokSesudah = (produk.stok || 0) + jumlah;
+        if (stokSesudah < 0) {
+            showToast(`Stok tidak cukup. Stok saat ini ${produk.stok}, pengurangan maksimal ${produk.stok}`, 'error');
+            return;
+        }
+    }
+
     try {
         const data = await api(`/api/produk/${id}/koreksi-stok`, { method: 'POST', body: JSON.stringify({ jumlah, alasan }) });
         closeModal('modal-koreksi');

@@ -239,6 +239,16 @@ produk.post('/:id/koreksi-stok', requireAuth, requireRole('super_admin', 'admin_
     const stokSebelum = check.produk.stok as number;
     const stokSesudah = stokSebelum + jumlah;
 
+    // FIX: koreksi stok pengurangan bisa hasilkan stok negatif tanpa batas.
+    // Stok negatif tidak bermakna secara bisnis dan menyebabkan laporan kacau.
+    // Izinkan minimum stok = 0 (habis), tidak boleh lebih rendah dari itu.
+    if (stokSesudah < 0) {
+      return c.json({
+        success: false,
+        error: `Stok tidak cukup. Stok saat ini ${stokSebelum}, pengurangan maksimal ${stokSebelum}`
+      }, 400);
+    }
+
     await db.batch([
       db.prepare(`UPDATE produk SET stok=?, updated_at=datetime('now') WHERE id=?`).bind(stokSesudah, id),
       db.prepare(
