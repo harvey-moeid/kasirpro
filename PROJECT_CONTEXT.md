@@ -1,5 +1,5 @@
 # PROJECT_CONTEXT.md — KasirPro
-*Di-generate: 2026-08-11 | Status: SANDBOX (belum production)*
+*Di-generate: 2026-08-13 | Status: SANDBOX (belum production)*
 
 ---
 
@@ -440,5 +440,10 @@ ENVIRONMENT=production
 2. Hapus/ganti produk contoh
 3. Update ALLOWED_ORIGIN dan ENFORCE_GEO
 4. ✅ B1/B3/B5 sudah diperbaiki (2026-08-12)
-5. ✅ B6/B7/B8/B9/B10 sudah diperbaiki (2026-08-13) — jalankan migration 0003 sebelum deploy
-6. B4 dead table, dampak nol (bisa diabaikan)
+5. ✅ B6/B7/B8/B9/B10 sudah diperbaiki (2026-08-13) — **jalankan migration 0003 sebelum deploy**
+6. ✅ Mobile UX: toolbar warna, body scroll lock, iOS zoom, touch target (2026-08-13)
+7. ✅ Desktop login card terpotong kanan-kiri — fixed (2026-08-13)
+8. ✅ Nama toko header etalase overflow — fixed (2026-08-13)
+9. ✅ Nama toko tidak update di storefront (HTTP cache) — fixed (2026-08-13)
+10. ✅ Cache-Control no-store semua API mutable — fixed (2026-08-13)
+11. B4 dead table `storage_usage`, dampak nol (bisa diabaikan)
