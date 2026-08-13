@@ -107,10 +107,17 @@
         .login-hero .flex.gap-2.mt-6 { display: none !important; }
 
         @media (min-width: 1024px) {
-            body { overflow: auto; display: flex; align-items: center; justify-content: center; }
+            body { overflow: auto; display: flex; align-items: center; justify-content: center; min-height: 100dvh; padding: 2rem; box-sizing: border-box; }
             .login-card {
-                flex-direction: row !important; max-width: 860px;
-                width: 100%; margin: 2rem; border-radius: 2rem !important;
+                flex-direction: row !important;
+                max-width: 860px;
+                /* FIX: w-full (width:100%) dari Tailwind override max-width sehingga
+                   card melebar penuh dan terpotong di layar lebar.
+                   Ganti ke width: min(860px, 100%) supaya max-width dihormati. */
+                width: min(860px, 100%) !important;
+                min-height: unset !important;
+                margin: 0 auto;
+                border-radius: 2rem !important;
                 overflow: hidden;
                 box-shadow: 0 30px 80px -20px rgba(0,0,0,.8),
                             0 0 0 1px rgba(255,255,255,.06);
@@ -166,7 +173,7 @@
     </style>
 </head>
 <body class="w-screen" style="color:rgba(255,255,255,.9)">
-<div class="login-card flex flex-col w-full" style="min-height:100dvh">
+<div class="login-card flex flex-col" style="min-height:100dvh">
 
     <!-- Hero area -->
     <div class="login-hero flex flex-col items-center justify-center text-white animate-fade-in z-0">
