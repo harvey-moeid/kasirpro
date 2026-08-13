@@ -387,8 +387,15 @@
         #print-area.paper-80 { max-width: 80mm; margin: 0 auto; }
 
         /* ===== LAYOUT SHELL ===== */
-        #app-col { display:flex; flex-direction:column; height:100vh; height:100dvh; flex:1 1 auto; min-width:0; }
-        #main-shell { display:flex; flex-direction:row; height:100vh; height:100dvh; width:100vw; }
+        /* FIX: html harus overflow-x:hidden — mobile browser masih bisa
+           scroll horizontal di level html kalau hanya body yang di-clip.
+           width:100% bukan 100vw karena 100vw include scrollbar width. */
+        html { overflow-x: hidden; width: 100%; }
+        body { width: 100%; max-width: 100%; overflow-x: hidden; }
+        #app-col { display:flex; flex-direction:column; height:100vh; height:100dvh; flex:1 1 auto; min-width:0; overflow:hidden; }
+        /* FIX: width:100% bukan 100vw — 100vw bisa lebih lebar dari
+           layout karena include scrollbar, trigger horizontal overflow */
+        #main-shell { display:flex; flex-direction:row; height:100vh; height:100dvh; width:100%; max-width:100%; overflow:hidden; }
 
         @media (min-width:1024px) {
             #floating-cart { display:none !important; }
@@ -408,7 +415,7 @@
         }
     </style>
 </head>
-<body class="w-screen flex flex-col relative text-ink-50">
+<body class="w-full flex flex-col relative text-ink-50">
 <div id="main-shell">
 <div id="app-col">
     <!-- HEADER -->
