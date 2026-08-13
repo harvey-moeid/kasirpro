@@ -135,12 +135,17 @@ input, textarea, select { font-family: inherit; }
   pointer-events: none;
 }
 .store-header-inner { display: flex; align-items: center; gap: 14px; position: relative; z-index: 1; }
+/* FIX: div wrapper nama toko perlu min-width:0 karena flex child default
+   min-width:auto — teks panjang tidak bisa truncate dan meluber keluar. */
+.store-header-inner > div { min-width: 0; flex: 1; }
 .store-logo {
   width: 54px; height: 54px; border-radius: 50%; object-fit: cover;
   border: 2px solid var(--gold-400); flex-shrink: 0; background: var(--navy-700);
   box-shadow: 0 0 0 4px rgba(var(--accent-rgb),0.14), 0 6px 16px rgba(0,0,0,0.35);
 }
-.store-name { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin: 0; letter-spacing: 0.2px; line-height: 1.25; }
+/* FIX: tambah overflow:hidden + text-overflow:ellipsis + white-space:nowrap
+   supaya nama toko panjang tidak meluber keluar header, cukup satu baris. */
+.store-name { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin: 0; letter-spacing: 0.2px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .store-meta {
   font-family: var(--font-mono); font-size: 11.5px; font-weight: 500; color: var(--gold-300);
   margin-top: 4px; letter-spacing: 0.01em; display: flex; align-items: center; gap: 6px;
