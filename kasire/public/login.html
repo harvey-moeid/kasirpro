@@ -25,6 +25,15 @@
         }
         *, *::before, *::after { box-sizing: border-box; }
 
+        /* FIX ROOT: html DAN body harus sama-sama overflow-x: hidden.
+           Kalau hanya body yang hidden tapi html tidak, mobile browser
+           tetap bisa scroll horizontal di level html element.
+           Ini root cause sebenarnya dari label yang terpotong di kiri. */
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #05091c;
@@ -33,14 +42,9 @@
                 radial-gradient(ellipse at 20% 100%, rgba(59,130,246,.07) 0%, transparent 50%),
                 linear-gradient(160deg, #0b1428 0%, #05091c 60%);
             -webkit-tap-highlight-color: transparent;
-            /* Mobile: biarkan scroll vertikal kalau konten tinggi,
-               tapi CEGAH overflow horizontal yang menyebabkan konten
-               terpotong / bergeser ke kiri */
             overflow-x: hidden;
             overflow-y: auto;
             min-height: 100dvh;
-            /* Pastikan body tidak lebih lebar dari viewport (w-screen = 100vw
-               bisa include scrollbar width dan menyebabkan horizontal overflow) */
             width: 100%;
             max-width: 100%;
         }
@@ -148,7 +152,12 @@
         }
 
         @keyframes slideUp {
-            0%   { transform: translateY(100%); opacity: 0; }
+            /* Pakai translateY(40px) bukan 100% — efek visual sama tapi
+               tidak mendorong elemen jauh keluar viewport yang bisa
+               memicu browser menghitung ulang document width (horizontal
+               overflow sementara) sebelum overflow-x:hidden sempat
+               mencegahnya. */
+            0%   { transform: translateY(40px); opacity: 0; }
             100% { transform: translateY(0);    opacity: 1; }
         }
         .animate-slide-up { animation: slideUp .6s cubic-bezier(.16,1,.3,1) forwards; }
